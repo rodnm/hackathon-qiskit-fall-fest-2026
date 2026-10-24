@@ -1,4 +1,6 @@
-# QAP10 — Quantum Assignment Hackathon (Qiskit Fall Fest 2026)
+# AeroQ Optimizer
+
+Airport gate assignment with classical and Qiskit-based optimization — team **The Explorers**, Qiskit Fall Fest 2026.
 
 NTT DATA challenge: solve the MIPLIB `qap10` quadratic assignment instance (10 items, 10 locations,
 reference optimum C* = 340) with a classical baseline and a Qiskit-based (quantum/hybrid) approach,
