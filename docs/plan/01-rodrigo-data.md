@@ -53,10 +53,12 @@ F dispersa con densidad ≈ 29/45 (≈ 0.64), con valores no nulos tomados del c
 Se usa para N = 14, 16, 20 (la fuerza bruta es imposible: 14! = 8.7×10¹⁰ ≈ 27 h a la velocidad actual). Si los organizadores entregan
 instancias del día 2, añade un cargador para su formato (soporta también `.dat` de QAPLIB).
 
-### D7. Arnés de benchmark (2:00–2:30) — `benchmark.py`
-`uv run python -m qap.benchmark --sizes 3 4 10 --methods bruteforce sa qaoa hybrid_lns --seeds 0 1 2 3 4`
-escribe `results/benchmark.csv` (esquema en 0.5). Cada fila guarda `params_json` y la semilla. La brecha se calcula solo para
-filas factibles. Los métodos de Diego se importan por nombre desde `qap.quantum`; mientras no existan, omítelos.
+### D7. Arnés de benchmark — `benchmark.py` + `stats.py` (hecho, ver `05-modelo-clasico.md`)
+`uv run python -m qap.benchmark [--sizes 3 4 10] [--seeds 0 … 9] [--methods …]` corre los métodos clásicos e **ingiere sin volver a
+correr** los resultados de Diego (`results/lambda_qaoa.csv`, `results/qaoa_m5.csv`, `results/hybrid_lns.csv`). Escribe
+`results/benchmark.csv` (esquema en 0.5) y `results/comparison.csv`, con la brecha del reto solo para N=10 y filas válidas, y,
+para QAOA, la fracción factible con IC de Wilson comparada con el piso del azar (test binomial). La tabla del día 1 y las figuras
+están en `notebooks/07_comparacion.ipynb`.
 
 ### D8. Reproducibilidad + apoyo al README (2:30–3:00)
 Clon nuevo en una carpeta temporal → `uv sync` → `uv run pytest` → `uv run python -m qap.benchmark …` reproduce el CSV.

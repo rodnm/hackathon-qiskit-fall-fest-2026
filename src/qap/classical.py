@@ -14,9 +14,26 @@ from .types import Instance, Result, cost, costs
 CHUNK = 200_000
 
 
+def _start_tracing() -> bool:
+    """Start tracemalloc unless a caller (e.g. the benchmark) already traces; return ownership."""
+    owns = not tracemalloc.is_tracing()
+    if owns:
+        tracemalloc.start()
+    tracemalloc.reset_peak()
+    return owns
+
+
+def _stop_tracing(owns: bool) -> float:
+    """Peak traced memory in MiB since _start_tracing; stop tracing only if we started it."""
+    _, peak = tracemalloc.get_traced_memory()
+    if owns:
+        tracemalloc.stop()
+    return peak / 2**20
+
+
 def solve_bruteforce(inst: Instance, *, seed: int = 0) -> Result:
     """Exact solver: enumerates every permutation in chunks, never storing them all."""
-    tracemalloc.start()
+    owns_tracing = _start_tracing()
     start = time.perf_counter()
     n = inst.n
     best_cost, best_perm = None, None
@@ -31,8 +48,7 @@ def solve_bruteforce(inst: Instance, *, seed: int = 0) -> Result:
         if best_cost is None or values[idx] < best_cost:
             best_cost, best_perm = int(values[idx]), chunk[idx]
     seconds = time.perf_counter() - start
-    _, peak = tracemalloc.get_traced_memory()
-    tracemalloc.stop()
+    peak_mb = _stop_tracing(owns_tracing)
     perm = tuple(int(g) for g in best_perm)
     return Result(
         method="bruteforce",
@@ -40,7 +56,7 @@ def solve_bruteforce(inst: Instance, *, seed: int = 0) -> Result:
         cost=cost(perm, inst),
         feasible=True,
         seconds=seconds,
-        peak_mem_mb=peak / 2**20,
+        peak_mem_mb=peak_mb,
         seed=seed,
         params={"chunk": CHUNK},
         extras={"proven_optimum": True, "evaluated": factorial(n)},
