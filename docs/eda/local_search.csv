@@ -1,0 +1,8 @@
+,valor
+arranques,2000.0
+óptimos locales distintos,274.0
+% que termina en el óptimo global,3.2
+% a ≤ 5 % del óptimo,9.9
+costo medio del óptimo local,372.9
+peor óptimo local,428.0
+pasos medios hasta converger,4.6

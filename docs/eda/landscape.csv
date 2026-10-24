@@ -1,0 +1,18 @@
+,valor
+permutaciones,3628800.0
+costo mínimo,340.0
+permutaciones óptimas,1.0
+segundo mejor costo,346.0
+permutaciones con el segundo mejor costo,1.0
+costo medio (exacto),511.73
+desviación estándar,39.18
+mediana,512.0
+costo máximo,666.0
+costo de la asignación identidad,454.0
+% de permutaciones mejores que la identidad,6.849
+permutaciones a ≤ 1 % del óptimo,1.0
+permutaciones a ≤ 5 % del óptimo,6.0
+permutaciones a ≤ 10 % del óptimo,207.0
+permutaciones a ≤ 20 % del óptimo,11939.0
+automorfismos de D (permutaciones de puertas que preservan D),1.0
+ahorro vs media aleatoria,0.3356

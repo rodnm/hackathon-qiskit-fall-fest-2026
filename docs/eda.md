@@ -1,0 +1,197 @@
+# EDA de la instancia qap10 (Track A: vuelos → puertas)
+
+Todo sale de `notebooks/01_data_eda.py` (`uv run python notebooks/01_data_eda.py`). Las figuras están en `docs/figures/`
+y las tablas en `docs/eda/*.csv`. En figuras y tablas los vuelos se llaman **V1..V10** y las puertas **P1..P10**
+(en el código van de 0 a 9). Paleta de las figuras: Okabe-Ito (azul, bermellón, verde azulado), validada para daltonismo.
+**Las unidades son supuestos, no mediciones.**
+
+## 1. Perfil de los datos
+
+La instancia son dos matrices pequeñas y completas: no hay nulos, ni duplicados, ni valores raros.
+
+| Dato | Valor |
+|---|---|
+| Vuelos × puertas | 10 × 10 |
+| Pares de vuelos | 45 (cada par se cuenta una sola vez) |
+| Pares con flujo > 0 | **29 (64,4 %)**; 16 pares sin pasajeros en común |
+| Flujo total | 228 |
+| Valores de flujo (pares > 0) | 2, 4, 6, 8, 10, 12, 20; mediana 8; **todos pares (mcd = 2)** |
+| Distancias entre puertas | 1 a 5; media 2,24; D simétrica, diagonal cero |
+| Layout de las puertas | **Cuadrícula de 4 columnas**, 10 celdas; D = distancia Manhattan (verificado celda a celda) |
+
+| Flujo del par | 0 | 2 | 4 | 6 | 8 | 10 | 12 | 20 |
+|---|---|---|---|---|---|---|---|---|
+| Número de pares | 16 | 4 | 9 | 1 | 2 | 9 | 1 | 3 |
+
+| Distancia entre puertas | 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|
+| Pares de puertas | 13 | 15 | 11 | 5 | 1 |
+
+![Distribución de flujos y distancias](figures/flow_distance_hist.png)
+
+**Lectura.** Los flujos son pocos valores discretos (18 de los 29 pares con flujo valen 4 o 10, y tres pares excepcionales valen 20); como
+`mcd = 2`, el dato "real" son los múltiplos 1, 2, 3, 4, 5, 6 y 10 (el factor 2 viene de la escala del archivo MPS). Más de la
+mitad de los pares de puertas están a 1 o 2 pasos.
+
+## 2. Patrones en los flujos
+
+![Mapa de flujos](figures/flows_heatmap.png)
+
+| Vuelo | Socios | Pasajeros en conexión | Participación | Mayor flujo (con) |
+|---|---|---|---|---|
+| **V8** | 5 | **64** | 14,0 % | 20 (V4) |
+| V6 | 7 | 52 | 11,4 % | 20 (V5) |
+| V7 | 6 | 52 | 11,4 % | 20 (V8) |
+| V2 | 7 | 46 | 10,1 % | 10 (V1) |
+| V4 | 5 | 46 | 10,1 % | 20 (V8) |
+| V5 | 5 | 46 | 10,1 % | 20 (V6) |
+| V1 | 7 | 42 | 9,2 % | 12 (V8) |
+| V10 | 6 | 40 | 8,8 % | 10 (V2) |
+| V3 | 5 | 34 | 7,5 % | 10 (V8) |
+| V9 | 5 | 34 | 7,5 % | 10 (V3) |
+
+"Participación" = pasajeros del vuelo / (2 × flujo total); suma 100 % porque cada transbordo involucra dos vuelos.
+
+![Pasajeros por vuelo](figures/flight_strength.png)
+
+![Mayores flujos y acumulado](figures/top_flows.png)
+
+**Hallazgos.**
+- **V8 es el vuelo hub:** 64 pasajeros, y tres de sus cinco socios son de los flujos grandes (V4 y V7 con 20, V1 con 12).
+- **Los flujos no están muy concentrados:** los tres pares de 20 (V4–V8, V5–V6, V7–V8) suman 26,3 %; los 5 mayores, 36 %; los 10 mayores, 58 %. No basta con "juntar los tres pares grandes": hay una cola larga de 10 y 4 que también cuenta.
+- Hay 16 pares de vuelos sin pasajeros en común, así que el problema no es un grafo completo (densidad 0,64).
+
+## 3. Las puertas
+
+![Cuadrícula de puertas y matriz de distancias](figures/gate_grid.png)
+
+| Puerta | P6 | P2, P7 | P3, P5 | P1, P10 | P8 | P4, P9 |
+|---|---|---|---|---|---|---|
+| Suma de distancias al resto (menor = más central) | **15** | 17 | 19 | 21 | 23 | 25 |
+
+**P6 es la puerta más central** y P4 / P9 son las más periféricas (las dos esquinas más alejadas, a 5 pasos entre sí).
+Como el costo premia la cercanía, la centralidad de la puerta importa para los vuelos con más pasajeros.
+
+## 4. El paisaje del costo (exacto sobre las 3 628 800 permutaciones)
+
+Se enumeraron todas las asignaciones (unos segundos), así que estas cifras no son una muestra.
+
+| Medida | Valor |
+|---|---|
+| **Óptimo** | **340, con una única permutación** (`V1→P3 V2→P7 V3→P4 V4→P1 V5→P9 V6→P5 V7→P6 V8→P2 V9→P8 V10→P10`) |
+| Segundo mejor costo | 346 (+1,8 %), también una sola permutación |
+| Asignaciones a ≤ 1 % / 5 % / 10 % / 20 % del óptimo | 1 / 6 / 207 / 11 939 |
+| Costo medio (exacto) · desv. estándar · mediana · máximo | 511,7 · 39,2 · 512 · 666 |
+| Asignación identidad (V*i* → P*i*) | 454; solo el 6,8 % de las asignaciones son mejores |
+| Ahorro del óptimo frente al promedio aleatorio | **33,6 %** |
+| Simetrías de D (permutaciones de puertas que preservan las distancias) | 1, solo la identidad |
+
+![Distribución exacta del costo](figures/cost_distribution_exact.png)
+
+![Vista para diapositivas](figures/random_cost_hist.png)
+
+**Hallazgos.**
+- **Es una aguja en un pajar:** el óptimo es único y la distribución es casi una campana (media 512, desviación 39); el óptimo está a 4,4 desviaciones de la media.
+- **No hay soluciones gemelas:** D no tiene simetrías, así que no existen óptimos equivalentes por reflexión. Esto simplifica la verificación (basta comparar con una sola permutación).
+- **La identidad ya es buena (454):** el orden natural de los vuelos está correlacionado con la estructura de los flujos; por eso "ahorro vs identidad" (25 %) es una cifra más modesta que "ahorro vs azar" (34 %). Para la historia, **usar "frente a una asignación al azar" y decirlo explícitamente**.
+- Los costos son siempre pares (F es par); la separación mínima entre niveles de costo es 2.
+
+## 5. Cómo es la solución óptima
+
+![Óptima vs identidad](figures/optimal_assignment.png)
+
+| Distancia que caminan los pasajeros entre sus dos puertas | 1 paso | 2 pasos | 3 pasos | ≥4 pasos |
+|---|---|---|---|---|
+| Óptima | **59,6 %** | 34,2 % | 3,5 % | 2,6 % |
+| Identidad | 44,7 % | 25,4 % | 15,8 % | 14,0 % |
+| Aleatoria (esperada) | 28,9 % | 33,3 % | 24,4 % | 13,3 % |
+
+![Flujo por distancia](figures/flow_by_distance.png)
+
+- Distancia media por pasajero: **1,49 pasos** (óptima), 1,99 (identidad), 2,24 (azar).
+- **Los vuelos con más pasajeros tienden a ocupar puertas más centrales:** correlación de Spearman −0,70 entre pasajeros del vuelo y
+  distancia media de su puerta (n = 10, p ≈ 0,02; evidencia moderada, no concluyente). V8 (64) está en P2, la segunda más central, pegada a
+  sus socios V4 (P1) y V1 (P3); V7 (52) está en P6, la más central.
+- No es una regla simple: V5 (46) queda en P9 (periférica) porque su socio principal V6 está en P5, a 1 paso. **Lo que se optimiza es la
+  cercanía entre socios, no la centralidad por sí sola.**
+
+![Flujo vs centralidad](figures/hubs_vs_centrality.png)
+
+## 6. Dificultad para los métodos de búsqueda
+
+2 000 descensos por intercambios de pares desde permutaciones aleatorias (semilla 0):
+
+| Medida | Valor |
+|---|---|
+| Óptimos locales distintos alcanzados | 274 |
+| Arranques que terminan en el óptimo global | **3,2 %** |
+| Arranques que terminan a ≤ 5 % del óptimo | 9,9 % |
+| Costo medio de un óptimo local · peor | 372,9 (+9,7 %) · 428 |
+| Pasos hasta converger | 4,6 en promedio |
+
+![Óptimos locales](figures/local_optima.png)
+
+**Implicación (para Rodrigo y Diego):** el paisaje es rugoso. Una búsqueda local simple casi nunca llega al óptimo (3 de cada 100) pero
+cae casi siempre a ~10 % de él, y converge en pocos pasos. Por eso el recocido simulado con reinicios (D5) es la línea base correcta, y
+para el híbrido conviene vecindarios que **no sean solo intercambios de pares** (por ejemplo, reasignar k = 3 o 4 vuelos a la vez, como en M6).
+
+## 7. Tamaño del problema y su efecto en lo cuántico
+
+| N | Pares con flujo | Óptimo | Media aleatoria | Ahorro vs azar | Qubits (N²) | Fracción de bitstrings factibles |
+|---|---|---|---|---|---|---|
+| 3 | 3 | 24 | 26,7 | **10 %** | 9 | 1,17 % |
+| 4 | 4 | 32 | 46,7 | 31 % | 16 | 0,037 % |
+| 5 | 7 | 58 | 88,0 | 34 % | 25 | 0,00036 % |
+| 6 | 10 | 94 | 139,2 | 33 % | 36 | 1,0·10⁻⁸ |
+| 7 | 13 | 112 | 171,4 | 35 % | 49 | 9,0·10⁻¹² |
+| 8 | 18 | 214 | 308,0 | 31 % | 64 | 2,2·10⁻¹⁵ |
+| 9 | 23 | 264 | 417,8 | 37 % | 81 | 1,5·10⁻¹⁹ |
+| 10 | 29 | 340 | 511,7 | 34 % | 100 | 2,9·10⁻²⁴ |
+
+Memoria de un statevector completo: N=4 → 1 MiB, N=5 → 512 MiB, N=6 → 1 TiB (coincide con la tabla del enunciado).
+
+![Escalamiento y factibilidad](figures/scaling_feasibility.png)
+
+**Hallazgos.**
+- **N=3 es demasiado fácil para una demo:** el óptimo ahorra solo 10 % frente al azar y hay apenas 6 permutaciones. **N=4 ya muestra
+  un ahorro del 31 %**, parecido al de la instancia completa (31–37 % desde N=4). Recomendación: **N=4 como instancia principal de la demo
+  cuántica** y N=3 como prueba rápida.
+- **Con la codificación one-hot, casi todos los bitstrings son inválidos:** con N=4 solo 24 de 65 536 (0,037 %) son asignaciones. Un
+  QAOA con muestreo uniforme encontraría una asignación válida 1 vez cada 2 700 disparos. Eso hace que **la fracción factible y la
+  penalización λ sean el eje técnico del estudio** (tarea M4 de Diego).
+- Con N=3 y N=4 solo hay 6 y 24 permutaciones: conviene reportar el **costo recalculado, la factibilidad y si se alcanzó el óptimo exacto**, no solo el porcentaje de brecha.
+
+## 8. Escala del QUBO
+
+![Coeficientes cuadráticos](figures/qubo_coefficients.png)
+
+El objetivo tiene 4 050 términos F·D (45 pares de vuelos × 90 pares ordenados de puertas), **2 610 no nulos**, con valores de 2 a 100
+(19 valores distintos; el 100 es F=20 × D=5). Cualquier penalización λ debe ser comparable con estos coeficientes (del orden de
+decenas); se calcula con precisión en la tarea M4.
+
+## 9. Calidad de datos
+
+| Chequeo | Resultado |
+|---|---|
+| Nulos / valores faltantes | Ninguno |
+| Dimensiones y tipos | Dos matrices 10×10 de enteros ≥ 0 |
+| Simetría | D simétrica con diagonal cero; F se guarda triangular superior (cada par una vez) |
+| Estructura de D | Igual a la distancia Manhattan sobre una cuadrícula de 4 columnas (celda a celda) |
+| Rank-1 de los coeficientes del MPS | Verificado para los 45 bloques (F·D exacto) |
+| Reproducción de los óptimos de control | 24 (N=3), 32 (N=4), 340 (N=10) por búsqueda exhaustiva |
+| Sentido físico | Distancias y flujos sin unidades en el archivo: **supuestos, no mediciones** |
+
+## 10. Qué hacer con esto
+
+| Para quién | Recomendación |
+|---|---|
+| **Felipe (historia)** | Usar "34 % menos caminata que una asignación al azar" (exacto: 33,6 %); mostrar `flow_by_distance.png` (60 % del flujo a 1 paso) y `optimal_assignment.png`. Decir "al azar", no "frente al orden actual". Demo cuántica en N=4. |
+| **Diego (modelos)** | La fracción factible one-hot (0,037 % en N=4) y los coeficientes hasta 100 enmarcan el estudio de λ. Reportar costo recalculado, factibilidad y si se llegó al óptimo exacto. |
+| **Rodrigo (datos)** | SA con reinicios como línea base (los descensos simples llegan al óptimo solo el 3 %). Benchmark con N = 3, 4, 5 y 10. |
+| **Todos** | El óptimo es único (D no tiene simetrías): comparar contra una sola permutación. |
+
+## Limitaciones de este análisis
+
+Es una sola instancia (qap10), de tamaño pequeño; la correlación hub–centralidad usa 10 puntos. Las estadísticas de búsqueda local dependen
+del vecindario (intercambios de pares) y de la semilla 0. Las unidades son supuestos: los porcentajes son relativos y reproducibles, pero no
+equivalen a minutos ni metros reales.
