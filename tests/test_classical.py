@@ -1,3 +1,5 @@
+import tracemalloc
+
 import pytest
 
 from qap.classical import solve_bruteforce
@@ -25,3 +27,12 @@ def test_bruteforce_reaches_the_control_optimum(n, optimum):
 def test_bruteforce_is_deterministic():
     inst = load_instance(4)
     assert solve_bruteforce(inst).perm == solve_bruteforce(inst).perm
+
+
+def test_bruteforce_keeps_a_callers_memory_tracing_alive():
+    tracemalloc.start()
+    try:
+        solve_bruteforce(load_instance(3))
+        assert tracemalloc.is_tracing()
+    finally:
+        tracemalloc.stop()
