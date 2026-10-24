@@ -1,21 +1,21 @@
-# Team plan (Track A): airport gate assignment on QAP10 — classical vs Qiskit
+# Plan del equipo (Track A): asignación de puertas de aeropuerto sobre QAP10 — clásico vs Qiskit
 
-Team: **Rodrigo = Data**, **Diego = Models**, **Felipe = Storytelling**.
-How to read this: **Part 0** is shared (everyone reads it, 5 min). Then read **only your part** (Rodrigo: 1, Diego: 2,
-Felipe: 3). Part 4 is the integration calendar and handoffs. Part 5 is open decisions.
+Equipo: **Rodrigo = Datos**, **Diego = Modelos**, **Felipe = Storytelling**.
+Cómo leerlo: la **Parte 0** es compartida (todos la leen, 5 min). Luego lee **solo tu parte** (Rodrigo: 1, Diego: 2,
+Felipe: 3). La Parte 4 es el calendario de integración y las entregas. La Parte 5 son las decisiones abiertas.
 
 
 ---
 
-## Index
+## Índice
 
-| File | Who reads it |
+| Archivo | Quién lo lee |
 |---|---|
-| [00-shared.md](00-shared.md) | Everyone (5 min): challenge, framing, verified facts, repo rules, shared contracts |
-| [01-rodrigo-data.md](01-rodrigo-data.md) | **Rodrigo** — data, instance recovery, classical baselines, benchmark |
-| [02-diego-models.md](02-diego-models.md) | **Diego** — QUBO/Ising, QAOA, hybrid decomposition, λ study |
-| [03-felipe-storytelling.md](03-felipe-storytelling.md) | **Felipe** — GateFlow Quantum product (React + FastAPI + Docker), slides, pitch, submission |
-| [04-calendar-and-decisions.md](04-calendar-and-decisions.md) | Everyone — integration calendar, handoffs, risks, open decisions |
+| [00-shared.md](00-shared.md) | Todos (5 min): reto, planteamiento, hechos verificados, reglas del repositorio, contratos compartidos |
+| [01-rodrigo-data.md](01-rodrigo-data.md) | **Rodrigo** — datos, recuperación de la instancia, líneas base clásicas, benchmark |
+| [02-diego-models.md](02-diego-models.md) | **Diego** — QUBO/Ising, QAOA, descomposición híbrida, estudio de λ |
+| [03-felipe-storytelling.md](03-felipe-storytelling.md) | **Felipe** — producto GateFlow Quantum (React + FastAPI + Docker), diapositivas, pitch, envío |
+| [04-calendar-and-decisions.md](04-calendar-and-decisions.md) | Todos — calendario de integración, entregas, riesgos, decisiones abiertas |
 
-Review checklist: read `00-shared.md` and your own file, then comment on the PR with anything unclear or unrealistic
-in your part, and confirm the handoffs you owe to the others.
+Lista de revisión: lee `00-shared.md` y tu propio archivo, luego comenta en el PR cualquier punto poco claro o poco realista
+de tu parte, y confirma las entregas que debes a los demás.

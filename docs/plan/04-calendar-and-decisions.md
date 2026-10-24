@@ -1,58 +1,58 @@
-# PART 4 — Integration calendar and handoffs
+# PARTE 4 — Calendario de integración y entregas
 
-Clock times, Saturday 24 Oct. Step 0 (contracts, PR #3) is already merged. **T = 12:45.** The relative times inside each
-person's file (`T+0:45`, …) are counted from T. Pitch window 15:00–16:40 (all three present), submission target 16:00,
-hard cutoff 17:00.
+Hora del reloj, sábado 24 de octubre. El Paso 0 (contratos, PR #3) ya está integrado (merge). **T = 12:45.** Los tiempos relativos dentro del archivo de
+cada persona (`T+0:45`, …) se cuentan desde T. Ventana de pitch 15:00–16:40 (los tres presentes), objetivo de envío 16:00,
+límite estricto 17:00.
 
-| Clock | Rodrigo (Data) | Diego (Models) | Felipe (Product & story) |
+| Hora | Rodrigo (Datos) | Diego (Modelos) | Felipe (Producto y narrativa) |
 |---|---|---|---|
-| 12:45–13:10 | Parser, F/D, npz (D2) → **handoff #1** | Spike (M1), start `model.py` | Formula fix, backend/Vite/Docker skeleton on mock JSON (S0–S2) |
-| 13:10–13:45 | Brute force (D3) → `solve_bruteforce` ≈ 13:30; figures (D4) → **handoff #2** | `model.py` + tests (M2–M3), λ study (M4) | Frontend screens on mock JSON, `/api/validate`, `/api/optimize/classical`, slides 1–5 |
-| 13:45–14:30 | SA (D5), benchmark harness (D7) | QAOA N=3/4 (M5) → **handoff #3** ≈ 14:10 | `/api/optimize/qaoa`, `/api/benchmark`, Docker clean-build test #1 (14:00) |
-| 14:30–14:45 | `results/benchmark.csv` (N=3/4/10: brute force, SA, QAOA) → **handoff #4** | Hybrid N=10 (M6) if ready; final numbers | **Feature freeze**, bug fixes, backup screenshots, Docker test #2 |
-| 14:45–15:15 | README repro check (D8), API tests | Notebook cleanup, Q&A answers | Slides 6–8, rehearsal ×3, video |
-| 15:00–16:40 | **Pitch window, all present** | | |
-| by 16:00 | | | Submission sent and links verified |
+| 12:45–13:10 | Parser, F/D, npz (D2) → **entrega #1** | Spike (M1), inicia `model.py` | Corrección de la fórmula, esqueleto de backend/Vite/Docker sobre JSON simulado (S0–S2) |
+| 13:10–13:45 | Fuerza bruta (D3) → `solve_bruteforce` ≈ 13:30; figuras (D4) → **entrega #2** | `model.py` + pruebas (M2–M3), estudio de λ (M4) | Pantallas del frontend sobre JSON simulado, `/api/validate`, `/api/optimize/classical`, diapositivas 1–5 |
+| 13:45–14:30 | SA (D5), arnés de benchmark (D7) | QAOA N=3/4 (M5) → **entrega #3** ≈ 14:10 | `/api/optimize/qaoa`, `/api/benchmark`, prueba de build limpio de Docker n.º 1 (14:00) |
+| 14:30–14:45 | `results/benchmark.csv` (N=3/4/10: fuerza bruta, SA, QAOA) → **entrega #4** | Híbrido N=10 (M6) si está listo; números finales | **Congelamiento de funcionalidades**, corrección de errores, capturas de respaldo, prueba de Docker n.º 2 |
+| 14:45–15:15 | Verificación de reproducibilidad del README (D8), pruebas de la API | Limpieza del notebook, respuestas para preguntas y respuestas | Diapositivas 6–8, ensayo ×3, video |
+| 15:00–16:40 | **Ventana de pitch, todos presentes** | | |
+| antes de las 16:00 | | | Envío enviado y enlaces verificados |
 
-**Priority tiers (so nobody tries to do everything before 14:45):**
-- **Must before freeze:** D2, D3, D5, D7 (rows for N=3/4/10) · M1–M5 · S2 backend + Results/Compare screens, Docker, slides, submission.
-- **Should:** M6 hybrid N=10 and the ablation · D4 figures · D8 reproducibility · S3 validation UI and sample distribution.
-- **Day 2 / stretch:** D6 synthetic N ≥ 14 and scaling runs, M7 (warm start, repair, noise), editing matrices in the UI.
+**Niveles de prioridad (para que nadie intente hacerlo todo antes de las 14:45):**
+- **Debe estar antes del congelamiento:** D2, D3, D5, D7 (filas para N=3/4/10) · M1–M5 · backend S2 + pantallas de Resultados/Comparar, Docker, diapositivas, envío.
+- **Debería:** M6 híbrido N=10 y la ablación · figuras de D4 · reproducibilidad D8 · interfaz de validación de S3 y distribución de muestras.
+- **Día 2 / opcional:** D6 sintéticas N ≥ 14 y ejecuciones de escalamiento, M7 (arranque en caliente, reparación, ruido), edición de matrices en la interfaz.
 
-Handoffs: **#1** `load_instance` + `qap10_FD.npz` (Rodrigo → Diego and Felipe) · **#2** figures in `docs/figures/`
-(Rodrigo → Felipe) · **#3** `solve_qaoa` N=3/4 results and `extras.samples` (Diego → Rodrigo for the benchmark, → Felipe for the
-API and the slides) · **#4** `results/benchmark.csv` (Rodrigo → Felipe).
-Sync points (5 min, standing): **14:00** (N=3/4 end-to-end: brute force + QAOA behind the API, shown in the UI), **14:30**
-(freeze the numbers shown to the jury), **14:45** (code freeze, all PRs merged).
-If someone is blocked > 15 min, say it in the team chat immediately; the free person helps (typical: Rodrigo finishes early →
-API tests, Docker check and README; Diego stuck on QAOA → switch to the fallback path in M1).
+Entregas: **#1** `load_instance` + `qap10_FD.npz` (Rodrigo → Diego y Felipe) · **#2** figuras en `docs/figures/`
+(Rodrigo → Felipe) · **#3** resultados de `solve_qaoa` N=3/4 y `extras.samples` (Diego → Rodrigo para el benchmark, → Felipe para la
+API y las diapositivas) · **#4** `results/benchmark.csv` (Rodrigo → Felipe).
+Puntos de sincronización (5 min, fijos): **14:00** (N=3/4 de extremo a extremo: fuerza bruta + QAOA detrás de la API, mostrado en la interfaz), **14:30**
+(congelar los números que se muestran al jurado), **14:45** (congelamiento de código, todos los PR integrados).
+Si alguien está bloqueado > 15 min, debe decirlo de inmediato en el chat del equipo; la persona libre ayuda (típico: Rodrigo termina antes →
+pruebas de la API, verificación de Docker y README; Diego atascado con QAOA → cambia a la alternativa de M1).
 
-**Day 2 (finalists, 08:30–13:00):** Rodrigo + Diego scale to N ≥ 14 (synthetic or organizers' instances; SA vs hybrid; time and
-memory; where it stops being convenient), Felipe adds the scaling view to the app and polishes the pitch.
+**Día 2 (finalistas, 08:30–13:00):** Rodrigo + Diego escalan a N ≥ 14 (sintéticas o instancias de los organizadores; SA vs híbrido; tiempo y
+memoria; dónde deja de ser conveniente), Felipe añade la vista de escalamiento a la app y pule el pitch.
 
-## Risks
-- QAOA will probably not beat classical → we report it plainly; the rubric rewards pertinence and honesty, not a claimed advantage.
-- Simulation cost → Aer only; N=5 optional; hybrid uses k ≤ 4.
-- Parser/recovery subtleties → control optima 24/32/340 are the tests; don't proceed on failing controls.
-- Felipe carries frontend + API + Docker + slides + video → priority tiers above, Rodrigo helps after his baselines.
-- Team of 3 vs 4 in the bases; possible announced restrictions on generative AI / pre-existing code → ask the organizers
-  and note what was AI-assisted.
-- Merge conflicts → ownership table, small PRs, contracts frozen after Step 0.
+## Riesgos
+- QAOA probablemente no superará al clásico → lo reportamos tal cual; la rúbrica premia la pertinencia y la honestidad, no una ventaja afirmada.
+- Costo de simulación → solo Aer; N=5 opcional; el híbrido usa k ≤ 4.
+- Sutilezas del parser/recuperación → los óptimos de control 24/32/340 son las pruebas; no avances si fallan los controles.
+- Felipe lleva frontend + API + Docker + diapositivas + video → niveles de prioridad anteriores, Rodrigo ayuda tras sus líneas base.
+- Equipo de 3 vs 4 en las bases; posibles restricciones anunciadas sobre IA generativa / código preexistente → pregunta a los organizadores
+  y anota qué se hizo con ayuda de IA.
+- Conflictos de merge → tabla de propiedad, PR pequeños, contratos congelados tras el Paso 0.
 
-## Verification (what "it works" means)
-- `uv run pytest` green: instance recovery 24 / 32 / 340; QUBO energy == `cost()` on all feasible assignments (N=3/4);
-  QAOA returns a feasible permutation for N=3.
-- `uv run python -m qap.benchmark …` writes `results/benchmark.csv`; gaps only over feasible solutions.
-- `docker compose up --build` from a fresh clone serves the app; the N=4 QAOA live run completes; N=10 results load from
-  committed files.
-- Fresh clone + `uv sync` + same seeds reproduces the CSV.
+## Verificación (qué significa "funciona")
+- `uv run pytest` en verde: recuperación de la instancia 24 / 32 / 340; energía QUBO == `cost()` en todas las asignaciones factibles (N=3/4);
+  QAOA devuelve una permutación factible para N=3.
+- `uv run python -m qap.benchmark …` escribe `results/benchmark.csv`; brechas solo sobre soluciones factibles.
+- `docker compose up --build` desde un clon nuevo sirve la app; la ejecución en vivo de QAOA con N=4 termina; los resultados de N=10 se cargan desde
+  archivos con commit.
+- Clon nuevo + `uv sync` + las mismas semillas reproduce el CSV.
 
 ---
 
-# PART 5 — Open decisions (please answer before/at kickoff)
+# PARTE 5 — Decisiones abiertas (por favor responder antes/en el kickoff)
 
-1. **Team size:** bases say 4 members; we are 3. Confirm with the organizers.
-2. **Repo visibility:** the jury must open the repo. It is **private** now. Options: make it public at submission time
-   (MIPLIB data is public; consider removing `reto-ntt-data/` PDFs first, they are organizer documents) or invite the jury accounts.
-3. **Who is who (decided):** Rodrigo = Data, Felipe = Product & storytelling (GateFlow Quantum, team The Explorers),
-   Diego = Models. Put the full names in `docs/team.md` and the submission.
+1. **Tamaño del equipo:** las bases dicen 4 integrantes; somos 3. Confirmar con los organizadores.
+2. **Visibilidad del repositorio:** el jurado debe poder abrir el repo. Ahora es **privado**. Opciones: hacerlo público en el momento del envío
+   (los datos de MIPLIB son públicos; considera eliminar antes los PDF de `reto-ntt-data/`, son documentos de los organizadores) o invitar a las cuentas del jurado.
+3. **Quién es quién (decidido):** Rodrigo = Datos, Felipe = Producto y storytelling (GateFlow Quantum, equipo The Explorers),
+   Diego = Modelos. Pon los nombres completos en `docs/team.md` y en el envío.
