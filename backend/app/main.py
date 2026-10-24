@@ -30,6 +30,7 @@ from .schemas import (
 )
 from .service import (
     benchmark_rows,
+    comparison_rows,
     instance_out,
     reference,
     result_out,
@@ -144,6 +145,11 @@ async def optimize_qaoa(request: QaoaRequest) -> ResultOut:
 @app.get("/api/benchmark")
 async def get_benchmark() -> list[dict[str, str]]:
     return await run_in_threadpool(benchmark_rows)
+
+
+@app.get("/api/comparison")
+async def get_comparison() -> list[dict[str, str]]:
+    return await run_in_threadpool(comparison_rows)
 
 
 @app.get("/api/runs")

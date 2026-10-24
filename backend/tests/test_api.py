@@ -16,6 +16,15 @@ def test_health() -> None:
     assert body["qiskit"]
 
 
+def test_comparison_reads_day1_results() -> None:
+    res = client.get("/api/comparison")
+    assert res.status_code == 200
+    rows = res.json()
+    assert isinstance(rows, list)
+    # Los resultados del Día 1 están commiteados: debe haber filas de qaoa
+    assert any(row.get("method") == "qaoa" for row in rows)
+
+
 def test_instance_n4() -> None:
     res = client.get("/api/instance", params={"n": 4})
     assert res.status_code == 200

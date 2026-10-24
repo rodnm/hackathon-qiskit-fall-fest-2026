@@ -40,6 +40,8 @@ export interface ResultOut {
   reference_kind: string
 }
 
+export type BenchmarkRow = Record<string, string>
+
 async function handle<T>(res: Response): Promise<T> {
   if (!res.ok) {
     let msg = `HTTP ${res.status}`
@@ -64,4 +66,5 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ n, method: 'bruteforce', seed }),
     }).then((r) => handle<ResultOut>(r)),
+  comparison: () => fetch('/api/comparison').then((r) => handle<BenchmarkRow[]>(r)),
 }
