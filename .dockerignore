@@ -1,0 +1,15 @@
+.venv
+.git
+.env
+.env_token
+.claude
+**/__pycache__
+**/node_modules
+docs
+notebooks
+reto-ntt-data
+tests
+backend/tests
+src/spike
+*.ipynb
+frontend/dist

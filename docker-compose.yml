@@ -1,0 +1,45 @@
+name: aeroq
+
+services:
+  frontend:
+    build: ./frontend
+    # Solo en loopback: Apache (139.64.165.157:80) hace de proxy reverso público
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      AEROQ_DB_HOST: db
+      AEROQ_DB_PORT: "5432"
+      AEROQ_DB_USER: ${POSTGRES_USER:-aeroq}
+      AEROQ_DB_PASSWORD: ${POSTGRES_PASSWORD:-aeroq_dev}
+      AEROQ_DB_NAME: ${POSTGRES_DB:-aeroq}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-aeroq}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aeroq_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-aeroq}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aeroq} -d ${POSTGRES_DB:-aeroq}"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+
+volumes:
+  pgdata:
