@@ -219,6 +219,13 @@ def choose_neighborhood(
     raise ValueError(f"unknown neighborhood rule {rule!r}")
 
 
+def _uniform_counts(num_qubits: int, shots: int, seed: int) -> dict[str, int]:
+    """Counts of `shots` uniform random bitstrings, same format as SamplerV2 get_counts()."""
+    bits = np.random.default_rng(seed).integers(0, 2, size=(shots, num_qubits))
+    strings, hits = np.unique(["".join(map(str, row)) for row in bits], return_counts=True)
+    return {str(s): int(h) for s, h in zip(strings, hits)}
+
+
 def _reassign(perm: tuple[int, ...], flights: tuple[int, ...], gates: tuple[int, ...],
               local: tuple[int, ...]) -> tuple[int, ...]:
     """New global perm: flight flights[a] goes to gate gates[local[a]], the rest stay."""
@@ -249,11 +256,13 @@ def solve_hybrid_lns(
     Each sub-problem is a k×k QAP with a linear term (interaction with the fixed flights), built as
     a QuadraticProgram (`build_subproblem`); its penalty is penalty_factor·λ*_sub, with λ*_sub exact
     by enumerating the 2^(k²) vectors. subsolver="qaoa" solves it with `run_qaoa` (k² qubits) and
-    keeps the best feasible sample; subsolver="exact" enumerates the k! reassignments. Every step
-    also solves the same sub-problem exactly (ablation: did QAOA find the sub-optimum?). A move is
-    accepted only if the global cost() strictly decreases.
+    keeps the best feasible sample; subsolver="exact" enumerates the k! reassignments;
+    subsolver="random" draws the same number of shots as uniform random bitstrings (control: what
+    QAOA adds over blind sampling). Every step also solves the same sub-problem exactly (ablation:
+    did the sampler find the sub-optimum?). A move is accepted only if the global cost() strictly
+    decreases.
     """
-    if subsolver not in {"qaoa", "exact"}:
+    if subsolver not in {"qaoa", "exact", "random"}:
         raise ValueError(f"unknown subsolver {subsolver!r}")
     if not 2 <= k <= min(4, inst.n):
         raise ValueError("k must be between 2 and min(4, n): k² qubits per sub-problem")
@@ -286,11 +295,16 @@ def solve_hybrid_lns(
             best = int(candidate_costs.argmin())
             new_perm, new_cost = tuple(int(g) for g in candidates[best]), exact_best
         else:
-            lam = max(penalty_factor * qp_penalty_threshold(qp, k), 1.0)
-            t_q = time.perf_counter()
-            counts, info = run_qaoa(to_qubo(qp, lam), seed=seed * 1000 + step, reps=reps,
-                                    maxiter=maxiter, shots=shots, normalize=normalize, init=init)
-            qaoa_seconds += time.perf_counter() - t_q
+            if subsolver == "qaoa":
+                lam = max(penalty_factor * qp_penalty_threshold(qp, k), 1.0)
+                t_q = time.perf_counter()
+                counts, info = run_qaoa(to_qubo(qp, lam), seed=seed * 1000 + step, reps=reps,
+                                        maxiter=maxiter, shots=shots, normalize=normalize,
+                                        init=init)
+                qaoa_seconds += time.perf_counter() - t_q
+            else:
+                counts, info = _uniform_counts(k * k, shots, seed * 1000 + step), {}
+                lam = None
             new_perm, new_cost, feasible_shots, optimal_shots = None, None, 0, 0
             for bitstring, hits in counts.items():
                 local = decode_x(x_from_bits(bitstring), k)
@@ -307,9 +321,9 @@ def solve_hybrid_lns(
                 feasible_fraction=feasible_shots / shots,
                 sub_optimum_prob=optimal_shots / shots,
                 qaoa_found_sub_optimum=new_cost == exact_best,
-                qubits=info["qubits"],
-                depth=info["depth"],
-                two_qubit_gates=info["two_qubit_gates"],
+                qubits=k * k,
+                depth=info.get("depth"),
+                two_qubit_gates=info.get("two_qubit_gates"),
             )
 
         accepted = new_cost is not None and new_cost < current_cost
@@ -331,7 +345,7 @@ def solve_hybrid_lns(
         "cost_trace": [s["cost_after"] for s in steps],
         "steps": steps,
     }
-    if subsolver == "qaoa":
+    if subsolver != "exact":
         extras.update(
             feasible_fraction=float(np.mean([s["feasible_fraction"] for s in steps])),
             sub_optimum_match_rate=float(np.mean([s["qaoa_found_sub_optimum"] for s in steps])),
@@ -341,7 +355,8 @@ def solve_hybrid_lns(
             qubits=k * k,
         )
     return Result(
-        method="hybrid_lns" if subsolver == "qaoa" else "hybrid_lns_exact",
+        method={"qaoa": "hybrid_lns", "exact": "hybrid_lns_exact",
+                "random": "hybrid_lns_random"}[subsolver],
         perm=current,
         cost=current_cost,
         feasible=True,

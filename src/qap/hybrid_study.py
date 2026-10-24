@@ -2,7 +2,8 @@
 
     uv run python -m qap.hybrid_study                 # both parts (~30 min)
     uv run python -m qap.hybrid_study --part qaoa     # M5 only: n=3,4 x reps 1-3 x seeds
-    uv run python -m qap.hybrid_study --part hybrid   # M6 only: N=10, QAOA vs exact subsolver
+    uv run python -m qap.hybrid_study --part hybrid   # M6 only: N=10, QAOA vs exact vs random
+    uv run python -m qap.hybrid_study --part hybrid --subsolvers random   # rerun only some
     uv run python -m qap.hybrid_study --plot-only     # redraw figures from results/*.csv
 
 Outputs: results/qaoa_small.csv, results/hybrid_lns.csv (shared benchmark schema first, then extra
@@ -47,6 +48,8 @@ HYBRID_RUNS = [
     ("exact", "random", 4, [0, 1, 2, 3, 4]),
     ("qaoa", "random", 3, [0, 1, 2]),
     ("qaoa", "flow", 3, [0, 1, 2]),
+    ("random", "random", 3, [0, 1, 2]),
+    ("random", "flow", 3, [0, 1, 2]),
 ]
 HYBRID_ITERATIONS = 30
 
@@ -105,10 +108,19 @@ def qaoa_part() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def hybrid_part() -> tuple[pd.DataFrame, pd.DataFrame]:
+def hybrid_part(subsolvers: set[str]) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Run the HYBRID_RUNS whose subsolver is in `subsolvers`; rows of other subsolvers already in
+    the CSVs are kept, so the slow QAOA runs need not be repeated."""
     inst = load_instance(10)
     rows, step_rows = [], []
+    if HYBRID_CSV.exists() and STEPS_CSV.exists():
+        old, old_steps = pd.read_csv(HYBRID_CSV), pd.read_csv(STEPS_CSV)
+        keep = ~old["params_json"].map(lambda p: json.loads(p)["subsolver"]).isin(subsolvers)
+        rows = old[keep].to_dict("records")
+        step_rows = old_steps[old_steps["run"].isin(set(old[keep]["run"]))].to_dict("records")
     for subsolver, neighborhood, k, seeds in HYBRID_RUNS:
+        if subsolver not in subsolvers:
+            continue
         for seed in seeds:
             result = solve_hybrid_lns(inst, seed=seed, k=k, iterations=HYBRID_ITERATIONS,
                                       subsolver=subsolver, neighborhood=neighborhood)
@@ -192,7 +204,7 @@ def plot_hybrid(runs: pd.DataFrame, steps: pd.DataFrame) -> None:
         axes[1].annotate(f"{gap:.1f}%\n{sec:.0f}s", (xi, gap), ha="center", va="bottom", fontsize=8)
     axes[1].set_xticks(x, summary.index, rotation=20, ha="right", fontsize=8)
     axes[1].set_ylabel("gap final vs 340 (%) · media, mín–máx")
-    axes[1].set_title("Ablación: subsolver QAOA vs enumeración exacta")
+    axes[1].set_title("Ablación del subsolver: QAOA vs exacto vs muestreo al azar")
     fig.suptitle(f"LNS híbrido, {HYBRID_ITERATIONS} iteraciones, arranque aleatorio con semilla")
     fig.tight_layout()
     fig.savefig(FIGURES / "qaoa_hybrid_lns.png", dpi=150)
@@ -203,6 +215,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--part", choices=["qaoa", "hybrid", "all"], default="all")
     parser.add_argument("--plot-only", action="store_true")
+    parser.add_argument("--subsolvers", default="exact,qaoa,random",
+                        help="hybrid part: comma-separated subsolvers to (re)run")
     args = parser.parse_args()
     RESULTS.mkdir(exist_ok=True)
     FIGURES.mkdir(parents=True, exist_ok=True)
@@ -210,7 +224,7 @@ def main() -> None:
     if not args.plot_only and args.part in {"qaoa", "all"}:
         qaoa_part()
     if not args.plot_only and args.part in {"hybrid", "all"}:
-        hybrid_part()
+        hybrid_part(set(args.subsolvers.split(",")))
     if QAOA_CSV.exists():
         plot_qaoa(pd.read_csv(QAOA_CSV))
     if HYBRID_CSV.exists() and STEPS_CSV.exists():

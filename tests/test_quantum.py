@@ -53,6 +53,15 @@ def test_hybrid_exact_never_worsens_and_reports_true_cost(neighborhood: str) -> 
     assert result.extras["improved_neighborhoods"] == result.extras["exact_could_improve"]
 
 
+def test_hybrid_random_control_is_reproducible() -> None:
+    inst = load_instance(10)
+    a = solve_hybrid_lns(inst, seed=3, subsolver="random", iterations=10, shots=512)
+    b = solve_hybrid_lns(inst, seed=3, subsolver="random", iterations=10, shots=512)
+    assert a.method == "hybrid_lns_random"
+    assert a.perm == b.perm and a.extras["cost_trace"] == b.extras["cost_trace"]
+    assert a.cost == cost(a.perm, inst) <= a.extras["start_cost"]
+
+
 def test_hybrid_qaoa_runs_and_records_the_ablation() -> None:
     inst = load_instance(6)
     result = solve_hybrid_lns(inst, seed=0, k=3, iterations=3, maxiter=30, shots=256)
