@@ -20,6 +20,7 @@ from scipy.optimize import minimize
 from .model import (
     build_qp,
     decode_x,
+    default_penalty,
     is_feasible,
     penalized_energy,
     to_ising,
@@ -39,7 +40,15 @@ def solve_qaoa(
     penalty: float | None = None,
     initial_point: np.ndarray | None = None,
 ) -> Result:
-    """QAOA on the penalized QUBO. Cost is always the real cost; extras keep the energy."""
+    """QAOA on the penalized QUBO. Cost is always the real cost; extras keep the energy.
+
+    penalty=None uses `default_penalty` (2·λ* for n <= 4) instead of qiskit-optimization's automatic
+    penalty, which is far above the threshold and flattens the landscape.
+    """
+    if penalty is None:
+        penalty, penalty_rule = default_penalty(inst)
+    else:
+        penalty_rule = "explicit"
     qp = build_qp(inst)
     qubo = to_qubo(qp, penalty)
     op, offset = to_ising(qubo)
@@ -64,9 +73,8 @@ def solve_qaoa(
     if initial_point is None:
         rng = np.random.default_rng(seed)
         initial_point = 0.1 + 0.01 * rng.standard_normal(isa.num_parameters)
-    opt = minimize(
-        energy, np.asarray(initial_point), method="COBYLA", options={"maxiter": maxiter}
-    )
+    initial_point = np.asarray(initial_point, dtype=float)
+    opt = minimize(energy, initial_point, method="COBYLA", options={"maxiter": maxiter})
 
     measured = pm.run(ansatz.measure_all(inplace=False))
     sampler = SamplerV2(default_shots=shots, seed=seed)
@@ -102,10 +110,12 @@ def solve_qaoa(
             "reps": reps,
             "maxiter": maxiter,
             "shots": shots,
-            "penalty": penalty,
-            "initial_point": [float(v) for v in opt.x],
+            "penalty": float(penalty),
+            "penalty_rule": penalty_rule,
+            "initial_point": [float(v) for v in initial_point],
         },
         extras={
+            "final_point": [float(v) for v in opt.x],
             "qubits": op.num_qubits,
             "pauli_terms": len(op),
             "depth": isa.depth(),

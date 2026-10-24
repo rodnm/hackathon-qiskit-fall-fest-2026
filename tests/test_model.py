@@ -23,11 +23,14 @@ from qap.model import (
     constraint_violation,
     decode,
     decode_x,
+    default_penalty,
+    exact_optimum,
     is_feasible,
     penalized_energies,
     penalized_energy,
     penalty_threshold,
     qap_objective,
+    spectrum_stats,
     to_ising,
     to_qubo,
     true_cost,
@@ -130,6 +133,41 @@ def test_penalty_threshold_below_simple_bound() -> None:
     for n in SIZES:
         inst = load_instance(n)
         assert 0 < penalty_threshold(inst) <= inst.optimum
+
+
+@pytest.mark.parametrize("n", SIZES)
+def test_penalty_threshold_chunked_matches_single_pass(n: int) -> None:
+    inst = load_instance(n)
+    assert penalty_threshold(inst, chunk_bits=5) == penalty_threshold(inst)
+
+
+@pytest.mark.parametrize("n, optimum", CONTROL)
+def test_exact_optimum_matches_control(n: int, optimum: int) -> None:
+    best, n_optima = exact_optimum(load_instance(n))
+    assert best == optimum
+    assert n_optima >= 1
+
+
+def test_default_penalty_rules() -> None:
+    lam, rule = default_penalty(load_instance(4))
+    assert lam == pytest.approx(2 * 13.0) and rule == "2*lambda_star"
+    inst = load_instance(10)
+    lam, rule = default_penalty(inst)
+    assert rule == "cost_identity_upper_bound"
+    assert lam >= inst.optimum  # a feasible cost bounds C*, which bounds λ*
+
+
+@pytest.mark.parametrize("n", SIZES)
+def test_spectrum_stats_feasibility_flips_at_threshold(n: int) -> None:
+    inst = load_instance(n)
+    lam_star = penalty_threshold(inst)
+    below, above = spectrum_stats(inst, 0.9 * lam_star), spectrum_stats(inst, 1.1 * lam_star)
+    assert not below["ground_feasible"]
+    assert above["ground_optimal"] and above["ground_energy"] == pytest.approx(inst.optimum)
+    # a larger penalty stretches the spectrum: the real objective keeps a smaller share of it
+    far = spectrum_stats(inst, 8 * lam_star)
+    assert far["feasible_span"] < above["feasible_span"]
+    assert far["rel_gap"] < above["rel_gap"]
 
 
 # --- Ising operator (x = (1 - Z)/2) ---------------------------------------------------------
