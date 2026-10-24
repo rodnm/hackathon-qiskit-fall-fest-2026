@@ -37,6 +37,63 @@ def build_qp(inst: Instance) -> QuadraticProgram:
     return qp
 
 
+def build_subproblem(
+    inst: Instance, perm: tuple[int, ...], flights: tuple[int, ...]
+) -> tuple[QuadraticProgram, tuple[int, ...]]:
+    """LNS sub-problem: re-assign `flights` among the gates they use now, other flights fixed.
+
+    Variables y_{a}_{b}: flight flights[a] -> gate gates[b] (k×k one-hot rows and columns).
+    Objective = interactions inside the neighborhood (quadratic) + interactions with the fixed
+    flights (linear) + fixed-fixed interactions (constant), so on any feasible y it equals the
+    global cost() of the reconstructed assignment. Returns (qp, gates).
+    """
+    k = len(flights)
+    gates = tuple(int(perm[i]) for i in flights)
+    inside = set(flights)
+    fixed = [m for m in range(inst.n) if m not in inside]
+    F_sym = inst.F_sym
+
+    qp = QuadraticProgram(f"{inst.name}-lns")
+    for a in range(k):
+        for b in range(k):
+            qp.binary_var(f"y_{a}_{b}")
+
+    quadratic = {}
+    for a, c in itertools.combinations(range(k), 2):
+        flow = F_sym[flights[a], flights[c]]
+        if not flow:
+            continue
+        for b in range(k):
+            for d in range(k):
+                if b != d:
+                    quadratic[(f"y_{a}_{b}", f"y_{c}_{d}")] = int(flow * inst.D[gates[b], gates[d]])
+    linear = {
+        f"y_{a}_{b}": int(sum(F_sym[flights[a], m] * inst.D[gates[b], perm[m]] for m in fixed))
+        for a in range(k)
+        for b in range(k)
+    }
+    constant = int(
+        sum(inst.F[i, m] * inst.D[perm[i], perm[m]] for i, m in itertools.combinations(fixed, 2))
+    )
+    qp.minimize(constant=constant, linear=linear, quadratic=quadratic)
+    for a in range(k):
+        qp.linear_constraint({f"y_{a}_{b}": 1 for b in range(k)}, "==", 1, f"row_{a}")
+    for b in range(k):
+        qp.linear_constraint({f"y_{a}_{b}": 1 for a in range(k)}, "==", 1, f"col_{b}")
+    return qp, gates
+
+
+def qp_penalty_threshold(qp: QuadraticProgram, n: int) -> float:
+    """λ* of any n×n one-hot QuadraticProgram (e.g. an LNS sub-problem), by enumeration (n <= 4)."""
+    if n > 4:
+        raise ValueError("qp_penalty_threshold enumerates 2^(n²) vectors: only n <= 4")
+    xs = all_binary_vectors(n * n)
+    objective = penalized_energies(xs, qp)  # the constrained qp has no penalty: plain objective
+    violation = constraint_violation(xs, n)
+    feasible = violation == 0
+    return float(np.max((objective[feasible].min() - objective[~feasible]) / violation[~feasible]))
+
+
 def to_qubo(qp: QuadraticProgram, lam: float | None = None) -> QuadraticProgram:
     """Penalize the equality constraints; lam=None lets qiskit-optimization choose the penalty."""
     return QuadraticProgramToQubo(penalty=lam).convert(qp)

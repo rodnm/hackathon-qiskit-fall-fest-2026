@@ -180,7 +180,7 @@ def plot_qaoa(df: pd.DataFrame) -> None:
     ]
     fig, axes = plt.subplots(1, 3, figsize=(15, 4))
     for n, group in df.groupby("n"):
-        stats = group.groupby("lambda_factor").agg(["mean", "std"])
+        stats = group.groupby("lambda_factor")[[m[0] for m in metrics]].agg(["mean", "std"])
         for ax, (col, baseline, label, log) in zip(axes, metrics):
             mean, std = stats[col]["mean"], stats[col]["std"].fillna(0)
             line = ax.errorbar(stats.index, mean, yerr=std, fmt="o-", capsize=3,
