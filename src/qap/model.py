@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import itertools
+
 import numpy as np
 from qiskit.quantum_info import SparsePauliOp
 from qiskit_optimization import QuadraticProgram
 from qiskit_optimization.converters import QuadraticProgramToQubo
 
-from .types import Instance, cost
+from .types import Instance, cost, costs
 
 
 def build_qp(inst: Instance) -> QuadraticProgram:
@@ -88,15 +90,17 @@ def penalized_energies(xs: np.ndarray, qubo: QuadraticProgram) -> np.ndarray:
     return np.einsum("bi,ij,bj->b", xs, quad, xs) + xs @ obj.linear.to_array() + obj.constant
 
 
-def all_binary_vectors(num_vars: int) -> np.ndarray:
-    """All 2^num_vars binary vectors in variable order (row b holds the bits of b, index 0 first)."""
-    return ((np.arange(2**num_vars)[:, None] >> np.arange(num_vars)) & 1).astype(np.int8)
+def all_binary_vectors(num_vars: int, start: int = 0, stop: int | None = None) -> np.ndarray:
+    """Binary vectors b in [start, stop) in variable order (row holds the bits of b, index 0 first)."""
+    stop = 2**num_vars if stop is None else stop
+    return ((np.arange(start, stop)[:, None] >> np.arange(num_vars)) & 1).astype(np.int8)
 
 
 def qap_objective(xs: np.ndarray, inst: Instance) -> np.ndarray:
     """C(x) = Σ_{i<k} Σ_{j,l} F[i,k]·D[j,l]·x_ij·x_kl for any binary x, feasible or not."""
     x = np.asarray(xs, dtype=np.int64).reshape(-1, inst.n, inst.n)
-    return np.einsum("bij,ik,jl,bkl->b", x, inst.F, inst.D, x)
+    pair_distance = x @ inst.D @ x.transpose(0, 2, 1)  # [b, i, k] = Σ_{j,l} x_ij D_jl x_kl
+    return (pair_distance * inst.F).sum(axis=(1, 2))
 
 
 def constraint_violation(xs: np.ndarray, n: int) -> np.ndarray:
@@ -105,16 +109,70 @@ def constraint_violation(xs: np.ndarray, n: int) -> np.ndarray:
     return ((x.sum(axis=2) - 1) ** 2).sum(axis=1) + ((x.sum(axis=1) - 1) ** 2).sum(axis=1)
 
 
-def penalty_threshold(inst: Instance) -> float:
+def exact_optimum(inst: Instance) -> tuple[int, int]:
+    """(C*, number of optimal permutations) by enumerating the n! permutations (small n only)."""
+    perms = np.array(list(itertools.permutations(range(inst.n))))
+    values = costs(perms, inst)
+    best = int(values.min())
+    return best, int((values == best).sum())
+
+
+def penalty_threshold(inst: Instance, chunk_bits: int = 20) -> float:
     """λ* = max over infeasible x of (C_opt − C(x)) / P(x), with P the constraint violation.
 
-    For λ > λ* the QUBO ground state is feasible and optimal. Exact enumeration: only for n <= 4.
+    For λ > λ* the QUBO ground state is feasible and optimal. Exact enumeration of the 2^(n²)
+    binary vectors in chunks of 2^chunk_bits: instant for n <= 4, about a minute for n = 5.
+    """
+    if inst.n > 5:
+        raise ValueError("penalty_threshold enumerates 2^(n²) vectors: only n <= 5 is tractable")
+    optimum, _ = exact_optimum(inst)
+    num_vars = inst.n * inst.n
+    total, step = 2**num_vars, 2 ** min(chunk_bits, num_vars)
+    threshold = -np.inf
+    for start in range(0, total, step):
+        xs = all_binary_vectors(num_vars, start, start + step)
+        violation = constraint_violation(xs, inst.n)
+        infeasible = violation > 0
+        ratio = (optimum - qap_objective(xs[infeasible], inst)) / violation[infeasible]
+        threshold = max(threshold, float(ratio.max()))
+    return threshold
+
+
+def default_penalty(inst: Instance, factor: float = 2.0) -> tuple[float, str]:
+    """Penalty used by the solvers and the rule that produced it (recorded in Result.params).
+
+    n <= 4: factor·λ* (exact threshold). Larger n: cost of the identity assignment, a feasible
+    cost, so it is >= C* >= λ* (safe but loose bound, see FORMULACION.md §3.1).
+    """
+    if inst.n <= 4:
+        return factor * penalty_threshold(inst), f"{factor:g}*lambda_star"
+    return float(cost(tuple(range(inst.n)), inst)), "cost_identity_upper_bound"
+
+
+def spectrum_stats(inst: Instance, lam: float) -> dict:
+    """Exact spectrum of E_λ = C + λ·P over all 2^(n²) states (n <= 4).
+
+    rel_gap = (E1 − E0) / (Emax − Emin), with E1 the first level above the ground level: it shrinks
+    as λ grows, a standard proxy for a harder landscape for QAOA. feasible_span is the fraction of
+    the energy range occupied by feasible states (how much room the real objective keeps).
     """
     if inst.n > 4:
-        raise ValueError("penalty_threshold enumerates 2^(n²); use block decomposition for n >= 5")
+        raise ValueError("spectrum_stats needs the full spectrum: only n <= 4")
     xs = all_binary_vectors(inst.n * inst.n)
     objective = qap_objective(xs, inst)
     violation = constraint_violation(xs, inst.n)
+    energy = objective + lam * violation
     feasible = violation == 0
     optimum = objective[feasible].min()
-    return float(np.max((optimum - objective[~feasible]) / violation[~feasible]))
+    e_min, e_max = energy.min(), energy.max()
+    ground = energy == e_min
+    levels = np.unique(energy)
+    return {
+        "lam": float(lam),
+        "ground_energy": float(e_min),
+        "ground_feasible": bool(feasible[ground].all()),
+        "ground_optimal": bool(feasible[ground].all() and (objective[ground] == optimum).all()),
+        "rel_gap": float((levels[1] - levels[0]) / (e_max - e_min)),
+        "feasible_span": float((objective[feasible].max() - optimum) / (e_max - e_min)),
+        "energy_range": float(e_max - e_min),
+    }
