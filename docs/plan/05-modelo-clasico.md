@@ -1,7 +1,7 @@
 # PARTE 5 — Modelo clásico (Rodrigo) para que Diego se concentre en lo cuántico
 
-**Estado:** Fase A (comparación del día 1) y Fase B (heurísticas clásicas) en ejecución por Rodrigo. **Fase C en stand by**
-hasta acordarla con Diego.
+**Estado:** Fase A (comparación del día 1, PR #12) y Fase B (heurísticas clásicas) hechas. **Fase C en stand by** hasta
+acordarla con Diego.
 
 ## Contexto
 

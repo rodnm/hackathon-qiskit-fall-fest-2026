@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
-import { api, type Health, type InstanceData, type ResultOut } from './services/api'
+import {
+  api,
+  type BenchmarkRow,
+  type Health,
+  type InstanceData,
+  type ResultOut,
+} from './services/api'
 import GateGrid from './components/GateGrid'
 
 function MatrixTable({ title, M, sym }: { title: string; M: number[][]; sym?: boolean }) {
@@ -36,6 +42,69 @@ function MatrixTable({ title, M, sym }: { title: string; M: number[][]; sym?: bo
   )
 }
 
+const fmt = (v: string | undefined, digits = 2) => {
+  const num = Number(v)
+  return Number.isFinite(num) && v !== '' ? num.toFixed(digits) : '—'
+}
+const pct = (v: string | undefined) => {
+  const num = Number(v)
+  return Number.isFinite(num) && v !== '' ? `${(num * 100).toFixed(1)} %` : '—'
+}
+
+function Day1Results() {
+  const [rows, setRows] = useState<BenchmarkRow[] | null>(null)
+  useEffect(() => {
+    api.comparison().then(setRows).catch(() => setRows([]))
+  }, [])
+  if (rows === null) return null
+  return (
+    <section className="card" id="resultados">
+      <h2>Resultados del Día 1 (con commit, no en vivo)</h2>
+      {rows.length === 0 ? (
+        <p className="muted">results/comparison.csv aún no existe en esta imagen.</p>
+      ) : (
+        <>
+          <div className="table-scroll">
+            <table className="data">
+              <thead>
+                <tr>
+                  <th>N</th>
+                  <th>Método</th>
+                  <th>Configuración</th>
+                  <th>Mejor coste</th>
+                  <th>Coste medio</th>
+                  <th>% óptimo alcanzado</th>
+                  <th>Tiempo medio (s)</th>
+                  <th>Fracción factible</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r, idx) => (
+                  <tr key={idx}>
+                    <td>{r.n}</td>
+                    <td>{r.method}</td>
+                    <td className="mono">{r.config}</td>
+                    <td>{fmt(r.best_cost, 0)}</td>
+                    <td>{fmt(r.mean_cost, 1)}</td>
+                    <td>{pct(r.reached_optimum_rate)}</td>
+                    <td>{fmt(r.mean_seconds)}</td>
+                    <td>{pct(r.feasible_fraction)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="muted">
+            Comparación clásico vs Qiskit con las métricas del reto (gap vs control
+            C*=340, fracción factible vs piso aleatorio, IC de Wilson). Ejecuciones
+            registradas con semilla y parámetros en <code>results/</code>.
+          </p>
+        </>
+      )}
+    </section>
+  )
+}
+
 export default function App() {
   const [health, setHealth] = useState<Health | null>(null)
   const [n, setN] = useState(4)
@@ -45,7 +114,13 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    document.title = 'AeroQ Optimizer — panel'
     api.health().then(setHealth).catch((e) => setError(String(e.message ?? e)))
+    if (window.location.hash === '#resultados') {
+      setTimeout(() => {
+        document.getElementById('resultados')?.scrollIntoView({ behavior: 'smooth' })
+      }, 300)
+    }
   }, [])
 
   useEffect(() => {
@@ -57,19 +132,23 @@ export default function App() {
       .catch((e) => setError(String(e.message ?? e)))
   }, [n])
 
-  const runSolver = useCallback(() => {
-    setRunning(true)
-    setError(null)
-    api
-      .classical(n)
-      .then(setResult)
-      .catch((e) => setError(String(e.message ?? e)))
-      .finally(() => setRunning(false))
-  }, [n])
+  const runSolver = useCallback(
+    (method: 'bruteforce' | 'sa') => {
+      setRunning(true)
+      setError(null)
+      api
+        .classical(n, 0, method)
+        .then(setResult)
+        .catch((e) => setError(String(e.message ?? e)))
+        .finally(() => setRunning(false))
+    },
+    [n],
+  )
 
   return (
     <main className="page">
       <header className="hero">
+        <a className="back" href="/">← Portada</a>
         <h1>AeroQ Optimizer</h1>
         <p className="tagline">
           Menos minutos caminando para los pasajeros en conexión — comparación
@@ -103,8 +182,11 @@ export default function App() {
               N = {v} {v === 10 ? '(completo)' : '(reducida)'}
             </button>
           ))}
-          <button className="run" onClick={runSolver} disabled={running || !inst}>
+          <button className="run" onClick={() => runSolver('bruteforce')} disabled={running || !inst}>
             {running ? 'Ejecutando…' : `Ejecutar solver exacto (N=${n}${n === 10 ? ', ≈ 4 s' : ''})`}
+          </button>
+          <button className="run secondary" onClick={() => runSolver('sa')} disabled={running || !inst}>
+            Recocido simulado (SA)
           </button>
         </div>
         {inst && (
@@ -155,6 +237,8 @@ export default function App() {
           </section>
         </>
       )}
+
+      <Day1Results />
 
       <footer className="footer">
         Las unidades y las conclusiones operativas son supuestos, no mediciones ·

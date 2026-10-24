@@ -14,7 +14,7 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
-from qap.classical import solve_bruteforce
+from qap.classical import solve_bruteforce, solve_sa
 from qap.data import load_instance
 from qap.quantum import solve_qaoa
 
@@ -30,6 +30,7 @@ from .schemas import (
 )
 from .service import (
     benchmark_rows,
+    comparison_rows,
     instance_out,
     reference,
     result_out,
@@ -92,16 +93,11 @@ async def validate(request: ValidateRequest) -> ValidateOut:
 
 @app.post("/api/optimize/classical", response_model=ResultOut)
 async def optimize_classical(request: ClassicalRequest) -> ResultOut:
-    if request.method == "sa":
-        raise HTTPException(
-            status_code=501,
-            detail=(
-                "solve_sa aún no está implementado en qap.classical; "
-                "usa method='bruteforce'"
-            ),
-        )
     inst = await run_in_threadpool(load_instance, request.n)
-    result = await run_in_threadpool(solve_bruteforce, inst, seed=request.seed)
+    if request.method == "sa":
+        result = await run_in_threadpool(solve_sa, inst, seed=request.seed)
+    else:
+        result = await run_in_threadpool(solve_bruteforce, inst, seed=request.seed)
     out = result_out(result, inst)
     _record(out, request.n)
     return out
@@ -144,6 +140,11 @@ async def optimize_qaoa(request: QaoaRequest) -> ResultOut:
 @app.get("/api/benchmark")
 async def get_benchmark() -> list[dict[str, str]]:
     return await run_in_threadpool(benchmark_rows)
+
+
+@app.get("/api/comparison")
+async def get_comparison() -> list[dict[str, str]]:
+    return await run_in_threadpool(comparison_rows)
 
 
 @app.get("/api/runs")

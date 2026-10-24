@@ -40,12 +40,14 @@ Produce exactamente estas figuras (los nombres son la entrega a Felipe, que las 
 Incluye también una celda markdown de 5 líneas que explique la recuperación de F/D (este es el requisito "explica cómo recuperaste…") y el
 control 24/32/340.
 
-### D5. Heurísticas clásicas (1:15–2:00) — `classical.py`
-- `solve_sa(inst, seed, iters, t0, alpha)`: recocido simulado sobre intercambios. **Evaluación de delta en O(n)** de un intercambio
-  (no recalcules el costo completo). Valores por defecto a ajustar en N=10: `iters=200_000`, enfriamiento geométrico, 20 reinicios,
-  el mejor de todos. Reporta el mejor costo, el tiempo y la semilla. Meta: llega a 340 en qap10 con la mayoría de las semillas.
-- `solve_local_search(inst, seed)`: intercambio de 2 elementos con mejor mejora desde un inicio aleatorio con reinicios (línea base barata).
-- Opcional si hay tiempo: búsqueda tabú robusta (el método clásico de referencia para QAP).
+### D5. Heurísticas clásicas — `classical.py` (hecho, ver `05-modelo-clasico.md`)
+- `swap_delta`: variación exacta del costo de un intercambio en O(n) (validada contra el recálculo completo).
+- `solve_local_search(inst, seed, restarts=100)`: descenso por el mejor intercambio con 100 arranques aleatorios. En N=10 llega
+  a 340 en 10 de 10 semillas, ~0,5 s por corrida.
+- `solve_sa(inst, seed, iters=10_000, restarts=10)`: recocido simulado con temperatura inicial calibrada y enfriamiento
+  geométrico. En N=10 llega a 340 en 9 de 10 semillas (gap medio del reto 0,29 %), ~2,8 s por corrida.
+- Ninguna usa el óptimo conocido (arranque aleatorio, presupuesto fijo). Están registradas en el benchmark.
+- Pendiente opcional (día 2): búsqueda tabú robusta.
 
 ### D6. Instancias para escalamiento (2:00–2:20) — `data.py: make_synthetic(n, seed)`
 Misma estructura que qap10 para que los resultados sean comparables: D = distancia Manhattan sobre una cuadrícula de 4 columnas y `n` celdas;

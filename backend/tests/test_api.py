@@ -16,6 +16,15 @@ def test_health() -> None:
     assert body["qiskit"]
 
 
+def test_comparison_reads_day1_results() -> None:
+    res = client.get("/api/comparison")
+    assert res.status_code == 200
+    rows = res.json()
+    assert isinstance(rows, list)
+    # Los resultados del Día 1 están commiteados: debe haber filas de qaoa
+    assert any(row.get("method") == "qaoa" for row in rows)
+
+
 def test_instance_n4() -> None:
     res = client.get("/api/instance", params={"n": 4})
     assert res.status_code == 200
@@ -45,11 +54,17 @@ def test_classical_n4_proven_optimum() -> None:
     assert sorted(body["perm"]) == [0, 1, 2, 3]
 
 
-def test_sa_not_implemented_is_501() -> None:
+def test_sa_n3_feasible() -> None:
     res = client.post(
-        "/api/optimize/classical", json={"n": 3, "method": "sa", "seed": 0}
+        "/api/optimize/classical", json={"n": 3, "method": "sa", "seed": 1}
     )
-    assert res.status_code == 501
+    assert res.status_code == 200
+    body = res.json()
+    assert body["method"] == "sa"
+    assert body["feasible"] is True
+    assert body["cost"] is not None and body["cost"] >= 24
+    assert sorted(body["perm"]) == [0, 1, 2]
+    assert body["reference_kind"] == "proven_optimum"
 
 
 def test_qaoa_rejects_n5() -> None:

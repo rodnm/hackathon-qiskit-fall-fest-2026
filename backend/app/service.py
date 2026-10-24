@@ -154,3 +154,12 @@ def benchmark_rows() -> list[dict[str, str]]:
         return []
     with path.open(encoding="utf-8") as fh:
         return list(csv.DictReader(fh))
+
+
+def comparison_rows() -> list[dict[str, str]]:
+    """Agregados del Día 1 (results/comparison.csv, con IC de Wilson y p-values)."""
+    path = ROOT / "results" / "comparison.csv"
+    if not path.exists():
+        return []
+    with path.open(encoding="utf-8") as fh:
+        return list(csv.DictReader(fh))
