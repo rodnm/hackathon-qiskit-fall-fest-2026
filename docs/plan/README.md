@@ -14,7 +14,7 @@ Felipe: 3). Part 4 is the integration calendar and handoffs. Part 5 is open deci
 | [00-shared.md](00-shared.md) | Everyone (5 min): challenge, framing, verified facts, repo rules, shared contracts |
 | [01-rodrigo-data.md](01-rodrigo-data.md) | **Rodrigo** — data, instance recovery, classical baselines, benchmark |
 | [02-diego-models.md](02-diego-models.md) | **Diego** — QUBO/Ising, QAOA, hybrid decomposition, λ study |
-| [03-felipe-storytelling.md](03-felipe-storytelling.md) | **Felipe** — product story, Streamlit app, slides, pitch, submission |
+| [03-felipe-storytelling.md](03-felipe-storytelling.md) | **Felipe** — GateFlow Quantum product (React + FastAPI + Docker), slides, pitch, submission |
 | [04-calendar-and-decisions.md](04-calendar-and-decisions.md) | Everyone — integration calendar, handoffs, risks, open decisions |
 
 Review checklist: read `00-shared.md` and your own file, then comment on the PR with anything unclear or unrealistic
