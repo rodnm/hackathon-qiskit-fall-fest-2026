@@ -19,3 +19,5 @@ Thumbs.db
 #diego
 FORMULACION.md
 .opencode
+# Secretos — nunca commitear
+.env_token
