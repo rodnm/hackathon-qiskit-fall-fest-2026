@@ -73,8 +73,12 @@ class Result:
   Una versión vectorizada `costs(perms_2d, inst)` para muchas permutaciones.
 - Firma del solver para cada método: `solve_xxx(inst: Instance, *, seed: int, **params) -> Result`.
 - Convención de orden de variables para QUBO: `x_{i}_{j}` con nombre `f"x_{i}_{j}"`, índice aplanado `i*n + j`.
-- Esquema del CSV de benchmark (`results/benchmark.csv`):
-  `instance,n,method,seed,cost,feasible,gap_pct,seconds,peak_mem_mb,feasible_fraction,penalized_energy,params_json`.
-  `gap_pct = 100·(cost−340)/340` **solo cuando es factible y n=10**; para otros n usa como referencia el óptimo de fuerza bruta.
+- Esquema del CSV de benchmark (`results/benchmark.csv`, lo genera `uv run python -m qap.benchmark`):
+  `instance,n,method,config,seed,cost,feasible,optimal,gap_pct,gap_vs_control_pct,seconds,peak_mem_mb,shots,feasible_samples,optimal_samples,feasible_fraction,penalized_energy,params_json,source`.
+  - `gap_pct = 100·(cost−340)/340` es **la brecha del reto: solo n=10 y solo filas válidas**.
+  - `gap_vs_control_pct = 100·(cost−óptimo de control)/óptimo de control` es para n<10 (24, 32, …): **extensión nuestra**, no la
+    brecha del reto.
+  - `cost` (costo real) y `penalized_energy` (energía del QUBO) son columnas distintas.
+  - El agregado por N × método × configuración está en `results/comparison.csv`.
 - Stubs que lancen `NotImplementedError` para cada solver + `tests/` con los valores de control (24 / 32 / 340) marcados como las
   pruebas de aceptación que cada responsable debe poner en verde.
