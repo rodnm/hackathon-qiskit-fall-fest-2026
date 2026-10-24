@@ -1,4 +1,9 @@
-"""Tests for the QUBO/Ising model (M2/M3). Owner: Diego."""
+"""Tests for the QUBO/Ising model (M2/M3). Owner: Diego.
+
+Every Qiskit object (QuadraticProgram, QUBO, SparsePauliOp, measured bitstrings) is checked against
+an independent classical reference: the exhaustive enumeration of the 2^(n²) binary vectors and the
+shared `cost()` function. Instances are the first n rows/columns of qap10 (optima 24 and 32).
+"""
 
 from __future__ import annotations
 
@@ -6,93 +11,182 @@ import itertools
 
 import numpy as np
 import pytest
+from qiskit import QuantumCircuit
+from qiskit.transpiler import generate_preset_pass_manager
+from qiskit_aer import AerSimulator
+from qiskit_aer.primitives import SamplerV2
 
+from qap.data import load_instance
 from qap.model import (
+    all_binary_vectors,
     build_qp,
+    constraint_violation,
     decode,
     decode_x,
     is_feasible,
+    penalized_energies,
     penalized_energy,
     penalty_threshold,
+    qap_objective,
     to_ising,
     to_qubo,
     true_cost,
     x_from_bits,
 )
-from qap.types import Instance, cost
+from qap.types import cost
 
-F = np.array(
-    [
-        [0, 10, 4, 8],
-        [0, 0, 6, 0],
-        [0, 0, 0, 0],
-        [0, 0, 0, 0],
-    ]
-)
-D = np.array(
-    [
-        [0, 1, 2, 3],
-        [1, 0, 1, 2],
-        [2, 1, 0, 1],
-        [3, 2, 1, 0],
-    ]
-)
+SIZES = [3, 4]
+CONTROL = [(3, 24), (4, 32)]
+THRESHOLD = [(3, 10.0), (4, 13.0)]
 
 
-def instance(n: int) -> Instance:
-    return Instance(f"test{n}", n, F[:n, :n].copy(), D[:n, :n].copy())
+def perm_to_x(perm: tuple[int, ...], n: int) -> np.ndarray:
+    """Permutation -> binary vector in variable order (index i*n + j)."""
+    x = np.zeros((n, n), dtype=np.int8)
+    x[np.arange(n), list(perm)] = 1
+    return x.ravel()
 
 
-@pytest.mark.parametrize("n, optimum", [(3, 24), (4, 32)])
-def test_qp_reaches_control_optimum(n: int, optimum: int) -> None:
-    inst = instance(n)
-    qubo = to_qubo(build_qp(inst), lam=penalty_threshold(inst) * 2)
-    # brute force over the 2^(n²) binary vectors: the argmin must be permutation of cost optimum
-    vectors = ((np.arange(2 ** (n * n))[:, None] >> np.arange(n * n)) & 1).astype(int)
-    energies = np.array([qubo.objective.evaluate(v) for v in vectors])
-    perm = decode_x(vectors[int(np.argmin(energies))], n)
-    assert is_feasible(perm, n)
-    assert cost(perm, inst) == optimum
+def qubo_for(n: int, factor: float = 2.0):
+    inst = load_instance(n)
+    return inst, to_qubo(build_qp(inst), lam=factor * penalty_threshold(inst))
 
 
-@pytest.mark.parametrize("n", [3, 4])
-def test_qubo_energy_equals_cost_on_permutations(n: int) -> None:
-    inst = instance(n)
-    qubo = to_qubo(build_qp(inst), lam=penalty_threshold(inst) * 2)
+# --- QuadraticProgram -----------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("n", SIZES)
+def test_quadratic_program_structure(n: int) -> None:
+    qp = build_qp(load_instance(n))
+    assert qp.get_num_binary_vars() == n * n
+    # variable order convention: x_{i}_{j} at flat index i*n + j
+    assert [v.name for v in qp.variables] == [f"x_{i}_{j}" for i in range(n) for j in range(n)]
+    assert len(qp.linear_constraints) == 2 * n
+    assert all(c.rhs == 1 for c in qp.linear_constraints)
+
+
+# --- QUBO (M3 a, b) -------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("n", SIZES)
+def test_qubo_energy_equals_cost_on_every_permutation(n: int) -> None:
+    """(a) The penalty vanishes on feasible points, so the QUBO energy is the true cost."""
+    inst, qubo = qubo_for(n)
     for perm in itertools.permutations(range(n)):
-        x = np.zeros((n, n), dtype=int)
-        x[np.arange(n), list(perm)] = 1
-        assert np.isclose(penalized_energy(x.ravel(), qubo), true_cost(perm, inst))
+        assert penalized_energy(perm_to_x(perm, n), qubo) == pytest.approx(true_cost(perm, inst))
 
 
-@pytest.mark.parametrize("n", [3, 4])
-def test_ising_offset_matches_ground_energy(n: int) -> None:
-    from qiskit.quantum_info import Statevector
+@pytest.mark.parametrize("n, optimum", CONTROL)
+def test_qubo_argmin_is_feasible_and_optimal(n: int, optimum: int) -> None:
+    """(b) With λ above the threshold the QUBO ground state is the optimal permutation."""
+    inst, qubo = qubo_for(n)
+    vectors = all_binary_vectors(n * n)
+    perm = decode_x(vectors[int(np.argmin(penalized_energies(vectors, qubo)))], n)
+    assert is_feasible(perm, n)
+    assert cost(perm, inst) == optimum == inst.optimum
 
-    inst = instance(n)
-    qubo = to_qubo(build_qp(inst), lam=penalty_threshold(inst) * 2)
+
+@pytest.mark.parametrize("n", SIZES)
+def test_qubo_equals_objective_plus_penalty_everywhere(n: int) -> None:
+    inst = load_instance(n)
+    lam = 3.0
+    qubo = to_qubo(build_qp(inst), lam=lam)
+    vectors = all_binary_vectors(n * n)
+    expected = qap_objective(vectors, inst) + lam * constraint_violation(vectors, n)
+    assert np.allclose(penalized_energies(vectors, qubo), expected)
+
+
+@pytest.mark.parametrize("n", SIZES)
+def test_vectorized_energies_match_qiskit(n: int) -> None:
+    _, qubo = qubo_for(n)
+    vectors = np.random.default_rng(0).integers(0, 2, size=(50, n * n))
+    expected = [qubo.objective.evaluate(v) for v in vectors]
+    assert np.allclose(penalized_energies(vectors, qubo), expected)
+
+
+# --- Penalty λ (M4 justification) -----------------------------------------------------------
+
+
+@pytest.mark.parametrize("n, threshold", THRESHOLD)
+def test_penalty_threshold_is_exact(n: int, threshold: float) -> None:
+    """λ* is tight: just above it the ground state is feasible, just below it is not."""
+    inst = load_instance(n)
+    lam_star = penalty_threshold(inst)
+    assert lam_star == pytest.approx(threshold)
+    vectors = all_binary_vectors(n * n)
+    violation = constraint_violation(vectors, n)
+
+    above = to_qubo(build_qp(inst), lam=1.01 * lam_star)
+    best = int(np.argmin(penalized_energies(vectors, above)))
+    assert violation[best] == 0
+    assert cost(decode_x(vectors[best], n), inst) == inst.optimum
+
+    below = to_qubo(build_qp(inst), lam=0.99 * lam_star)
+    assert violation[int(np.argmin(penalized_energies(vectors, below)))] > 0
+
+
+def test_penalty_threshold_below_simple_bound() -> None:
+    """λ* <= C* because C(x) >= 0 and P(x) >= 1 on infeasible points."""
+    for n in SIZES:
+        inst = load_instance(n)
+        assert 0 < penalty_threshold(inst) <= inst.optimum
+
+
+# --- Ising operator (x = (1 - Z)/2) ---------------------------------------------------------
+
+
+@pytest.mark.parametrize("n", SIZES)
+def test_ising_diagonal_matches_qubo_on_every_basis_state(n: int) -> None:
+    """⟨b|H|b⟩ + offset equals the QUBO energy on all 2^(n²) computational basis states."""
+    _, qubo = qubo_for(n)
     op, offset = to_ising(qubo)
     assert op.num_qubits == n * n
-    # check on a few random/feasible assignments
-    for perm in list(itertools.permutations(range(n)))[:10]:
-        x = np.zeros(n * n)
-        for i, p in enumerate(perm):
-            x[i * n + p] = 1
-        qv = qubo.objective.evaluate(x)
-        sv = Statevector.from_label("".join(str(int(b)) for b in x[::-1]))
-        hv = float(np.real_if_close(sv.expectation_value(op)))
-        assert np.isclose(hv + offset, qv)
+    assert all(set(label) <= {"I", "Z"} for label in op.paulis.to_labels())
+    # diagonal index b = basis state |b⟩, qubit q = bit q of b = row b of all_binary_vectors
+    diagonal = op.to_matrix(sparse=True).diagonal().real
+    assert np.allclose(diagonal + offset, penalized_energies(all_binary_vectors(n * n), qubo))
 
 
-def test_decode_little_endian() -> None:
-    # measured bitstring: rightmost char = qubit 0. Identity permutation for n=3, reversed string.
-    x = np.eye(3).ravel().astype(int)
-    bits = "".join(str(int(b)) for b in x[::-1])
-    assert decode(bits, 3) == (0, 1, 2)
-    assert np.array_equal(x_from_bits(bits), x)
+@pytest.mark.parametrize("n, optimum", CONTROL)
+def test_ising_ground_state_is_optimal_permutation(n: int, optimum: int) -> None:
+    inst, qubo = qubo_for(n)
+    op, offset = to_ising(qubo)
+    diagonal = op.to_matrix(sparse=True).diagonal().real
+    ground = int(np.argmin(diagonal))
+    perm = decode_x(all_binary_vectors(n * n)[ground], n)
+    assert cost(perm, inst) == optimum
+    assert diagonal[ground] + offset == pytest.approx(optimum)
+
+
+# --- Bit order: circuit -> measurement -> decode (same primitive and transpiler as solve_qaoa) ---
+
+
+@pytest.mark.parametrize("n", SIZES)
+def test_measured_bitstrings_decode_to_prepared_permutation(n: int) -> None:
+    """Prepare |x(perm)⟩ with X on qubit i*n + perm[i], sample on Aer, decode, get perm back."""
+    perms = list(itertools.permutations(range(n)))
+    pm = generate_preset_pass_manager(optimization_level=1, backend=AerSimulator())
+    circuits = []
+    for perm in perms:
+        qc = QuantumCircuit(n * n)
+        for i, j in enumerate(perm):
+            qc.x(i * n + j)
+        qc.measure_all()
+        circuits.append(pm.run(qc))
+
+    results = SamplerV2(default_shots=16, seed=0).run(circuits).result()
+    for perm, result in zip(perms, results):
+        counts = result.data.meas.get_counts()
+        assert len(counts) == 1  # basis state: deterministic outcome
+        (bitstring,) = counts
+        assert decode(bitstring, n) == perm
+        assert np.array_equal(x_from_bits(bitstring), perm_to_x(perm, n))
+
+
+def test_decode_rejects_non_permutations() -> None:
     assert decode("0", 3) is None
-
-
-def test_penalty_threshold_positive() -> None:
-    assert penalty_threshold(instance(3)) > 0
-    assert penalty_threshold(instance(4)) > 0
+    assert decode("0" * 9, 3) is None
+    # x = [1,1,0 | 0,0,0 | 0,0,1] (flight 0 on two gates, flight 1 on none), measured reversed
+    assert decode("100000011", 3) is None
+    # perm (0,2,1) -> x = 100|001|010, measured "010100001"; reading it unreversed gives (1,0,2)
+    assert decode("010100001", 3) == (0, 2, 1)

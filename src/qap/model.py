@@ -48,10 +48,9 @@ def to_ising(qubo: QuadraticProgram) -> tuple[SparsePauliOp, float]:
 
 def decode(bitstring: str, n: int) -> tuple[int, ...] | None:
     """Measured bitstring (Qiskit: rightmost char = qubit 0) -> perm, or None if not a permutation."""
-    try:
-        return decode_x(x_from_bits(bitstring), n)
-    except Exception:
+    if len(bitstring) != n * n:
         return None
+    return decode_x(x_from_bits(bitstring), n)
 
 
 def x_from_bits(bitstring: str) -> np.ndarray:
@@ -81,6 +80,31 @@ def penalized_energy(x: np.ndarray, qubo: QuadraticProgram) -> float:
     return float(qubo.objective.evaluate(np.asarray(x)))
 
 
+def penalized_energies(xs: np.ndarray, qubo: QuadraticProgram) -> np.ndarray:
+    """Vectorized penalized_energy for a (m, num_vars) array of binary vectors."""
+    obj = qubo.objective
+    xs = np.asarray(xs, dtype=float)
+    quad = obj.quadratic.to_array(symmetric=False)
+    return np.einsum("bi,ij,bj->b", xs, quad, xs) + xs @ obj.linear.to_array() + obj.constant
+
+
+def all_binary_vectors(num_vars: int) -> np.ndarray:
+    """All 2^num_vars binary vectors in variable order (row b holds the bits of b, index 0 first)."""
+    return ((np.arange(2**num_vars)[:, None] >> np.arange(num_vars)) & 1).astype(np.int8)
+
+
+def qap_objective(xs: np.ndarray, inst: Instance) -> np.ndarray:
+    """C(x) = Σ_{i<k} Σ_{j,l} F[i,k]·D[j,l]·x_ij·x_kl for any binary x, feasible or not."""
+    x = np.asarray(xs, dtype=np.int64).reshape(-1, inst.n, inst.n)
+    return np.einsum("bij,ik,jl,bkl->b", x, inst.F, inst.D, x)
+
+
+def constraint_violation(xs: np.ndarray, n: int) -> np.ndarray:
+    """P(x) = Σ_i (Σ_j x_ij − 1)² + Σ_j (Σ_i x_ij − 1)²; zero iff x is a permutation matrix."""
+    x = np.asarray(xs, dtype=np.int64).reshape(-1, n, n)
+    return ((x.sum(axis=2) - 1) ** 2).sum(axis=1) + ((x.sum(axis=1) - 1) ** 2).sum(axis=1)
+
+
 def penalty_threshold(inst: Instance) -> float:
     """λ* = max over infeasible x of (C_opt − C(x)) / P(x), with P the constraint violation.
 
@@ -88,17 +112,9 @@ def penalty_threshold(inst: Instance) -> float:
     """
     if inst.n > 4:
         raise ValueError("penalty_threshold enumerates 2^(n²); use block decomposition for n >= 5")
-    n = inst.n
-    i_all, k_all = np.triu_indices(n, 1)
-    bits = ((np.arange(2 ** (n * n))[:, None] >> np.arange(n * n)) & 1).astype(np.int8)
-    x = bits.reshape(-1, n, n)
-    rows = x.sum(axis=2)
-    cols = x.sum(axis=1)
-    violation = ((rows - 1) ** 2).sum(axis=1) + ((cols - 1) ** 2).sum(axis=1)
+    xs = all_binary_vectors(inst.n * inst.n)
+    objective = qap_objective(xs, inst)
+    violation = constraint_violation(xs, inst.n)
     feasible = violation == 0
-    # perm[i] = gate of flight i
-    perm = x.argmax(axis=2)
-    objective = (inst.F[i_all, k_all][None, :] * inst.D[perm[:, i_all], perm[:, k_all]]).sum(axis=1)
     optimum = objective[feasible].min()
-    infeasible = ~feasible
-    return float(np.max((optimum - objective[infeasible]) / np.maximum(violation[infeasible], 1)))
+    return float(np.max((optimum - objective[~feasible]) / violation[~feasible]))
