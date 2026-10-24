@@ -57,7 +57,7 @@ function GateFlowArt() {
 
 export default function Landing() {
   useEffect(() => {
-    document.title = 'AeroQ Optimizer — menos metros caminando'
+    document.title = 'AeroQ Optimizer — menos metros caminando en cada conexión'
   }, [])
 
   return (
