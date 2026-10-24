@@ -236,6 +236,7 @@ table { border-collapse: collapse; font-size: 0.82rem; }
 .data th, .data td { border-bottom: 1px solid var(--line); padding: 6px 12px; text-align: left; white-space: nowrap; }
 .data thead th { background: #f1f5f9; }
 .data td.mono { font-family: ui-monospace, monospace; font-size: 0.78rem; }
+.data td.hit { color: var(--ok-ink); font-weight: 700; background: var(--ok-bg); }
 
 .gategrid { width: 100%; max-width: 620px; height: auto; }
 .gategrid .cell { fill: #eef2f7; stroke: #94a3b8; stroke-width: 1.5; }

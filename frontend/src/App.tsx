@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   api,
   type BenchmarkRow,
@@ -53,9 +53,27 @@ const pct = (v: string | undefined) => {
 
 function Day1Results() {
   const [rows, setRows] = useState<BenchmarkRow[] | null>(null)
+  const [bench, setBench] = useState<BenchmarkRow[] | null>(null)
   useEffect(() => {
     api.comparison().then(setRows).catch(() => setRows([]))
+    api.benchmark().then(setBench).catch(() => setBench([]))
   }, [])
+  const n10 = useMemo(() => {
+    const groups = new Map<string, { method: string; config: string; runs: number; best: number; feasible: number; seconds: number }>()
+    for (const r of bench ?? []) {
+      if (r.n !== '10') continue
+      const key = `${r.method}|${r.config}`
+      const g = groups.get(key) ?? { method: r.method, config: r.config, runs: 0, best: Infinity, feasible: 0, seconds: 0 }
+      g.runs += 1
+      g.best = Math.min(g.best, Number(r.cost))
+      g.feasible += r.feasible === 'True' ? 1 : 0
+      g.seconds += Number(r.seconds)
+      groups.set(key, g)
+    }
+    return [...groups.values()]
+      .map((g) => ({ ...g, meanSeconds: g.seconds / g.runs }))
+      .sort((a, b) => a.best - b.best || a.method.localeCompare(b.method))
+  }, [bench])
   if (rows === null) return null
   return (
     <section className="card" id="resultados">
@@ -98,6 +116,41 @@ function Day1Results() {
             Comparación clásico vs Qiskit con las métricas del reto (gap vs control
             C*=340, fracción factible vs piso aleatorio, IC de Wilson). Ejecuciones
             registradas con semilla y parámetros en <code>results/</code>.
+          </p>
+        </>
+      )}
+      {n10.length > 0 && (
+        <>
+          <h3>Instancia completa N=10 (referencia: óptimo 340)</h3>
+          <div className="table-scroll">
+            <table className="data">
+              <thead>
+                <tr>
+                  <th>Método</th>
+                  <th>Configuración</th>
+                  <th>Ejecuciones</th>
+                  <th>Mejor coste</th>
+                  <th>Factibles</th>
+                  <th>Tiempo medio (s)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {n10.map((g, idx) => (
+                  <tr key={idx}>
+                    <td>{g.method}</td>
+                    <td className="mono">{g.config}</td>
+                    <td>{g.runs}</td>
+                    <td className={g.best === 340 ? 'hit' : ''}>{g.best}</td>
+                    <td>{g.feasible}/{g.runs}</td>
+                    <td>{g.meanSeconds.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="muted">
+            Resultados en caché de la instancia completa; la ejecución híbrida nunca
+            se lanza en vivo durante la demo.
           </p>
         </>
       )}

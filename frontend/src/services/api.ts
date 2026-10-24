@@ -69,4 +69,5 @@ export const api = {
       body: JSON.stringify({ n, method, seed }),
     }).then((r) => handle<ResultOut>(r)),
   comparison: () => fetch('/api/comparison').then((r) => handle<BenchmarkRow[]>(r)),
+  benchmark: () => fetch('/api/benchmark').then((r) => handle<BenchmarkRow[]>(r)),
 }
