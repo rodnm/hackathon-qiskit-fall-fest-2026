@@ -1,7 +1,8 @@
 # EDA de la instancia qap10 (Track A: vuelos → puertas)
 
-Todo sale de `notebooks/01_data_eda.py` (`uv run python notebooks/01_data_eda.py`). Las figuras están en `docs/figures/`
-y las tablas en `docs/eda/*.csv`. En figuras y tablas los vuelos se llaman **V1..V10** y las puertas **P1..P10**
+Resumen del notebook **`notebooks/01_data.ipynb`**, que contiene el análisis completo con código, tablas y gráficos. Para
+regenerarlo (rehace también las figuras y las tablas): `uv run jupyter nbconvert --to notebook --execute --inplace notebooks/01_data.ipynb`.
+Las figuras están en `docs/figures/` y las tablas en `docs/eda/*.csv`. En figuras y tablas los vuelos se llaman **V1..V10** y las puertas **P1..P10**
 (en el código van de 0 a 9). Paleta de las figuras: Okabe-Ito (azul, bermellón, verde azulado), validada para daltonismo.
 **Las unidades son supuestos, no mediciones.**
 
@@ -93,7 +94,7 @@ Se enumeraron todas las asignaciones (unos segundos), así que estas cifras no s
 **Hallazgos.**
 - **Es una aguja en un pajar:** el óptimo es único y la distribución es casi una campana (media 512, desviación 39); el óptimo está a 4,4 desviaciones de la media.
 - **No hay soluciones gemelas:** D no tiene simetrías, así que no existen óptimos equivalentes por reflexión. Esto simplifica la verificación (basta comparar con una sola permutación).
-- **La identidad ya es buena (454):** el orden natural de los vuelos está correlacionado con la estructura de los flujos; por eso "ahorro vs identidad" (25 %) es una cifra más modesta que "ahorro vs azar" (34 %). Para la historia, **usar "frente a una asignación al azar" y decirlo explícitamente**.
+- **La identidad ya es buena (454):** solo el 6,8 % de las asignaciones la mejora, lo que sugiere que el orden de los vuelos en el archivo no es arbitrario; por eso "ahorro vs identidad" (25 %) es una cifra más modesta que "ahorro vs azar" (34 %). Para la historia, **usar "frente a una asignación al azar" y decirlo explícitamente**.
 - Los costos son siempre pares (F es par); la separación mínima entre niveles de costo es 2.
 
 ## 5. Cómo es la solución óptima
@@ -156,9 +157,9 @@ Memoria de un statevector completo: N=4 → 1 MiB, N=5 → 512 MiB, N=6 → 1 Ti
 - **N=3 es demasiado fácil para una demo:** el óptimo ahorra solo 10 % frente al azar y hay apenas 6 permutaciones. **N=4 ya muestra
   un ahorro del 31 %**, parecido al de la instancia completa (31–37 % desde N=4). Recomendación: **N=4 como instancia principal de la demo
   cuántica** y N=3 como prueba rápida.
-- **Con la codificación one-hot, casi todos los bitstrings son inválidos:** con N=4 solo 24 de 65 536 (0,037 %) son asignaciones. Un
-  QAOA con muestreo uniforme encontraría una asignación válida 1 vez cada 2 700 disparos. Eso hace que **la fracción factible y la
-  penalización λ sean el eje técnico del estudio** (tarea M4 de Diego).
+- **Con la codificación one-hot, casi todos los bitstrings son inválidos:** con N=4 solo 24 de 65 536 (0,037 %) son asignaciones. Elegir
+  bitstrings al azar daría una asignación válida 1 de cada ~2 700 veces; cualquier método cuántico tiene que superar ese piso. Eso hace
+  que **la fracción factible y la penalización λ sean el eje técnico del estudio** (tarea M4 de Diego).
 - Con N=3 y N=4 solo hay 6 y 24 permutaciones: conviene reportar el **costo recalculado, la factibilidad y si se alcanzó el óptimo exacto**, no solo el porcentaje de brecha.
 
 ## 8. Escala del QUBO
