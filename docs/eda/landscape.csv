@@ -10,10 +10,10 @@ mediana,512.0
 costo máximo,666.0
 costo de la asignación identidad,454.0
 % de asignaciones mejores que la identidad,6.85
-asignaciones a ≤ 1 % del óptimo,1.0
-asignaciones a ≤ 5 % del óptimo,6.0
-asignaciones a ≤ 10 % del óptimo,207.0
-asignaciones a ≤ 20 % del óptimo,11939.0
+asignaciones con gap ≤ 1 %,1.0
+asignaciones con gap ≤ 5 %,6.0
+asignaciones con gap ≤ 10 %,207.0
+asignaciones con gap ≤ 20 %,11939.0
 simetrías de D,1.0
-ahorro del óptimo vs media aleatoria,0.3356
+ahorro del óptimo vs media aleatoria (1 − 340/media),0.3356
 desviaciones estándar entre media y óptimo,4.38

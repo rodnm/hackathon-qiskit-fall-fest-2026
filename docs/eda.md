@@ -81,10 +81,10 @@ Se enumeraron todas las asignaciones (unos segundos), así que estas cifras no s
 |---|---|
 | **Óptimo** | **340, con una única permutación** (`V1→P3 V2→P7 V3→P4 V4→P1 V5→P9 V6→P5 V7→P6 V8→P2 V9→P8 V10→P10`) |
 | Segundo mejor costo | 346 (+1,8 %), también una sola permutación |
-| Asignaciones a ≤ 1 % / 5 % / 10 % / 20 % del óptimo | 1 / 6 / 207 / 11 939 |
+| Asignaciones con gap ≤ 1 % / 5 % / 10 % / 20 % | 1 / 6 / 207 / 11 939 |
 | Costo medio (exacto) · desv. estándar · mediana · máximo | 511,7 · 39,2 · 512 · 666 |
-| Asignación identidad (V*i* → P*i*) | 454; solo el 6,8 % de las asignaciones son mejores |
-| Ahorro del óptimo frente al promedio aleatorio | **33,6 %** |
+| Asignación identidad (V*i* → P*i*) | 454 (gap 33,5 %); solo el 6,8 % de las asignaciones son mejores |
+| Ahorro del óptimo frente al promedio aleatorio (1 − 340/511,7; **no es un gap**) | **33,6 %** |
 | Simetrías de D (permutaciones de puertas que preservan las distancias) | 1, solo la identidad |
 
 ![Distribución exacta del costo](figures/cost_distribution_exact.png)
@@ -96,6 +96,29 @@ Se enumeraron todas las asignaciones (unos segundos), así que estas cifras no s
 - **No hay soluciones gemelas:** D no tiene simetrías, así que no existen óptimos equivalentes por reflexión. Esto simplifica la verificación (basta comparar con una sola permutación).
 - **La identidad ya es buena (454):** solo el 6,8 % de las asignaciones la mejora, lo que sugiere que el orden de los vuelos en el archivo no es arbitrario; por eso "ahorro vs identidad" (25 %) es una cifra más modesta que "ahorro vs azar" (34 %). Para la historia, **usar "frente a una asignación al azar" y decirlo explícitamente**.
 - Los costos son siempre pares (F es par); la separación mínima entre niveles de costo es 2.
+
+### Brecha (gap) con la fórmula del reto
+
+El enunciado pide, para la instancia completa, calcular la brecha **solo sobre soluciones válidas**:
+
+$$\text{gap}(\%) = 100\,\frac{C - 340}{340}$$
+
+Todas las asignaciones de esta sección son válidas (una puerta por vuelo y un vuelo por puerta), así que la fórmula aplica a todas.
+
+| Solución de referencia | Costo | Gap |
+|---|---|---|
+| Óptimo | 340 | 0 % |
+| Segundo mejor | 346 | 1,76 % |
+| Óptimo local medio (búsqueda por intercambios, sección 6) | 372,9 | 9,7 % |
+| Identidad (V*i* → P*i*) | 454 | 33,5 % |
+| Media de una asignación al azar | 511,7 | 50,5 % |
+| Peor asignación | 666 | 95,9 % |
+
+**Gap no es lo mismo que ahorro.** El gap mide cuánto peor que el óptimo es una solución (relativo a 340). El "ahorro" de la
+narrativa mide cuánto menos camina el óptimo frente a una referencia (relativo a esa referencia): 1 − 340/511,7 = **33,6 %** frente
+al azar. La asignación al azar tiene gap 50,5 %, y la identidad tiene gap 33,5 %, casi el mismo número que el ahorro. **En el pitch
+y en las diapositivas hay que nombrar siempre cuál de las dos cifras se muestra.** Para los métodos cuánticos, las muestras
+inválidas se excluyen del gap y se reportan aparte como fracción factible.
 
 ## 5. Cómo es la solución óptima
 
@@ -126,8 +149,8 @@ Se enumeraron todas las asignaciones (unos segundos), así que estas cifras no s
 |---|---|
 | Óptimos locales distintos alcanzados | 274 |
 | Arranques que terminan en el óptimo global | **3,2 %** |
-| Arranques que terminan a ≤ 5 % del óptimo | 9,9 % |
-| Costo medio de un óptimo local · peor | 372,9 (+9,7 %) · 428 |
+| Arranques que terminan con gap ≤ 5 % | 9,9 % |
+| Costo medio de un óptimo local · peor | 372,9 (gap 9,7 %) · 428 (gap 25,9 %) |
 | Pasos hasta converger | 4,6 en promedio |
 
 ![Óptimos locales](figures/local_optima.png)
@@ -161,6 +184,8 @@ Memoria de un statevector completo: N=4 → 1 MiB, N=5 → 512 MiB, N=6 → 1 Ti
   bitstrings al azar daría una asignación válida 1 de cada ~2 700 veces; cualquier método cuántico tiene que superar ese piso. Eso hace
   que **la fracción factible y la penalización λ sean el eje técnico del estudio** (tarea M4 de Diego).
 - Con N=3 y N=4 solo hay 6 y 24 permutaciones: conviene reportar el **costo recalculado, la factibilidad y si se alcanzó el óptimo exacto**, no solo el porcentaje de brecha.
+- **Gap en subinstancias:** el reto define el gap para la instancia completa (referencia 340). Para N=3 y N=4 usamos la misma
+  fórmula con el óptimo de control de esa subinstancia (24 y 32); es una extensión nuestra y hay que decirlo al reportarla.
 
 ## 8. Escala del QUBO
 
@@ -170,7 +195,29 @@ El objetivo tiene 4 050 términos F·D (45 pares de vuelos × 90 pares ordenados
 (19 valores distintos; el 100 es F=20 × D=5). Cualquier penalización λ debe ser comparable con estos coeficientes (del orden de
 decenas); se calcula con precisión en la tarea M4.
 
-## 9. Calidad de datos
+## 9. La instancia en Qiskit
+
+El método cuántico se construye con **Qiskit**. El notebook representa cada subinstancia como `QuadraticProgram`
+(`qiskit-optimization`), la convierte a QUBO con penalizaciones (`QuadraticProgramToQubo`) y a Hamiltoniano de Ising (`to_ising`,
+con x = (1 − Z)/2), y verifica que las tres representaciones dan **exactamente el mismo costo** que `qap.types.cost` sobre
+asignaciones válidas.
+
+| N | Qubits | Términos de Pauli | λ automático de Qiskit | Mayor coeficiente del objetivo | Asignaciones verificadas | Costo idéntico |
+|---|---|---|---|---|---|---|
+| 3 | 9 | 45 | 161 | 20 | 6 (todas) | sí |
+| 4 | 16 | 112 | 561 | 30 | 24 (todas) | sí |
+| 5 | 25 | 265 | 1 761 | 40 | 120 (todas) | sí |
+| 6 | 36 | 516 | 4 177 | 80 | 720 (todas) | sí |
+| 10 | 100 | 3 610 | 46 057 | 100 | 202 (óptimo, identidad y 200 al azar) | sí |
+
+- Sobre una asignación válida la penalización vale 0, así que **energía = costo**. En una inválida la energía incluye la
+  penalización y **no** es un costo; por eso el gap se calcula solo sobre válidas.
+- Los términos de Pauli crecen rápido: además del objetivo, cada restricción one-hot aporta un término ZZ por cada par de
+  variables de su fila o columna.
+- **La penalización automática de Qiskit es muy grande** (561 con N=4, cuyo mayor coeficiente es 30). Garantiza que el mínimo sea
+  factible, pero aplana el paisaje de energía: elegir un λ menor y justificado es parte de la tarea M4.
+
+## 10. Calidad de datos
 
 | Chequeo | Resultado |
 |---|---|
@@ -180,15 +227,16 @@ decenas); se calcula con precisión en la tarea M4.
 | Estructura de D | Igual a la distancia Manhattan sobre una cuadrícula de 4 columnas (celda a celda) |
 | Rank-1 de los coeficientes del MPS | Verificado para los 45 bloques (F·D exacto) |
 | Reproducción de los óptimos de control | 24 (N=3), 32 (N=4), 340 (N=10) por búsqueda exhaustiva |
+| Representación en Qiskit | `QuadraticProgram`, QUBO e Ising reproducen el costo exacto (N = 3, 4, 5, 6, 10) |
 | Sentido físico | Distancias y flujos sin unidades en el archivo: **supuestos, no mediciones** |
 
-## 10. Qué hacer con esto
+## 11. Qué hacer con esto
 
 | Para quién | Recomendación |
 |---|---|
-| **Felipe (historia)** | Usar "34 % menos caminata que una asignación al azar" (exacto: 33,6 %); mostrar `flow_by_distance.png` (60 % del flujo a 1 paso) y `optimal_assignment.png`. Decir "al azar", no "frente al orden actual". Demo cuántica en N=4. |
-| **Diego (modelos)** | La fracción factible one-hot (0,037 % en N=4) y los coeficientes hasta 100 enmarcan el estudio de λ. Reportar costo recalculado, factibilidad y si se llegó al óptimo exacto. |
-| **Rodrigo (datos)** | SA con reinicios como línea base (los descensos simples llegan al óptimo solo el 3 %). Benchmark con N = 3, 4, 5 y 10. |
+| **Felipe (historia)** | Usar "34 % menos caminata que una asignación al azar" (exacto: 33,6 %) y llamarlo **ahorro**, no gap; mostrar `flow_by_distance.png` (60 % del flujo a 1 paso) y `optimal_assignment.png`. Decir "al azar", no "frente al orden actual". Demo cuántica en N=4. |
+| **Diego (modelos)** | Partir de la representación Qiskit verificada (sección 9). La fracción factible one-hot (0,037 % en N=4) y el λ automático (561 frente a un coeficiente máximo de 30) enmarcan el estudio de λ. Reportar costo recalculado, factibilidad, gap solo sobre muestras válidas y si se llegó al óptimo exacto. |
+| **Rodrigo (datos)** | SA con reinicios como línea base (los descensos simples llegan al óptimo solo el 3 %, con gap medio 9,7 %). Benchmark con N = 3, 4, 5 y 10 y la columna gap con la fórmula del reto. |
 | **Todos** | El óptimo es único (D no tiene simetrías): comparar contra una sola permutación. |
 
 ## Limitaciones de este análisis
