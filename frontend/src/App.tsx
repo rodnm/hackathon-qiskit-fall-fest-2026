@@ -132,15 +132,18 @@ export default function App() {
       .catch((e) => setError(String(e.message ?? e)))
   }, [n])
 
-  const runSolver = useCallback(() => {
-    setRunning(true)
-    setError(null)
-    api
-      .classical(n)
-      .then(setResult)
-      .catch((e) => setError(String(e.message ?? e)))
-      .finally(() => setRunning(false))
-  }, [n])
+  const runSolver = useCallback(
+    (method: 'bruteforce' | 'sa') => {
+      setRunning(true)
+      setError(null)
+      api
+        .classical(n, 0, method)
+        .then(setResult)
+        .catch((e) => setError(String(e.message ?? e)))
+        .finally(() => setRunning(false))
+    },
+    [n],
+  )
 
   return (
     <main className="page">
@@ -179,8 +182,11 @@ export default function App() {
               N = {v} {v === 10 ? '(completo)' : '(reducida)'}
             </button>
           ))}
-          <button className="run" onClick={runSolver} disabled={running || !inst}>
+          <button className="run" onClick={() => runSolver('bruteforce')} disabled={running || !inst}>
             {running ? 'Ejecutando…' : `Ejecutar solver exacto (N=${n}${n === 10 ? ', ≈ 4 s' : ''})`}
+          </button>
+          <button className="run secondary" onClick={() => runSolver('sa')} disabled={running || !inst}>
+            Recocido simulado (SA)
           </button>
         </div>
         {inst && (

@@ -56,15 +56,17 @@ async function handle<T>(res: Response): Promise<T> {
   return (await res.json()) as T
 }
 
+export type SolverMethod = 'bruteforce' | 'sa'
+
 export const api = {
   health: () => fetch('/api/health').then((r) => handle<Health>(r)),
   instance: (n: number) =>
     fetch(`/api/instance?n=${n}`).then((r) => handle<InstanceData>(r)),
-  classical: (n: number, seed = 0) =>
+  classical: (n: number, seed = 0, method: SolverMethod = 'bruteforce') =>
     fetch('/api/optimize/classical', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ n, method: 'bruteforce', seed }),
+      body: JSON.stringify({ n, method, seed }),
     }).then((r) => handle<ResultOut>(r)),
   comparison: () => fetch('/api/comparison').then((r) => handle<BenchmarkRow[]>(r)),
 }

@@ -189,6 +189,11 @@ body {
 .chip.active { border-color: var(--accent); color: var(--accent); font-weight: 600; }
 .run { border-radius: 10px; background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 .run:disabled { opacity: 0.5; cursor: wait; }
+.run.secondary {
+  background: #fff;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
 
 .badge {
   display: inline-block;
