@@ -1,4 +1,0 @@
-qiskit
-qiskit-aer
-matplotlib
-jupyter
