@@ -51,3 +51,5 @@ uv run jupyter nbconvert --to notebook --execute --inplace notebooks/01_data.ipy
 - `notebooks/` — analysis notebooks
 - `docs/` — team plan, EDA report and figures
 - `tests/` — tests
+- `.claude/skills/` — AI-agent skills for the team (Claude Code loads them automatically): hackathon coach, Qiskit engineering,
+  quantum optimization (QUBO/Ising/QAOA), IBM Quantum compute, QML EdTech
