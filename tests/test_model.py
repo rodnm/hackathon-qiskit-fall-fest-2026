@@ -20,6 +20,7 @@ from qap.data import load_instance
 from qap.model import (
     all_binary_vectors,
     build_qp,
+    build_subproblem,
     constraint_violation,
     decode,
     decode_x,
@@ -30,6 +31,7 @@ from qap.model import (
     penalized_energy,
     penalty_threshold,
     qap_objective,
+    qp_penalty_threshold,
     spectrum_stats,
     to_ising,
     to_qubo,
@@ -219,6 +221,39 @@ def test_measured_bitstrings_decode_to_prepared_permutation(n: int) -> None:
         (bitstring,) = counts
         assert decode(bitstring, n) == perm
         assert np.array_equal(x_from_bits(bitstring), perm_to_x(perm, n))
+
+
+@pytest.mark.parametrize("k", [2, 3, 4])
+def test_subproblem_objective_equals_global_cost(k: int) -> None:
+    """On every feasible y the sub-problem objective is the global cost of the rebuilt perm."""
+    inst = load_instance(10)
+    rng = np.random.default_rng(k)
+    for _ in range(5):
+        perm = tuple(int(g) for g in rng.permutation(10))
+        flights = tuple(sorted(int(i) for i in rng.choice(10, size=k, replace=False)))
+        qp, gates = build_subproblem(inst, perm, flights)
+        assert gates == tuple(perm[i] for i in flights)
+        for local in itertools.permutations(range(k)):
+            new = list(perm)
+            for a, b in enumerate(local):
+                new[flights[a]] = gates[b]
+            assert qp.objective.evaluate(perm_to_x(local, k)) == cost(tuple(new), inst)
+
+
+@pytest.mark.parametrize("k", [3, 4])
+def test_subproblem_threshold_makes_ground_state_feasible(k: int) -> None:
+    inst = load_instance(10)
+    rng = np.random.default_rng(0)
+    perm = tuple(int(g) for g in rng.permutation(10))
+    flights = tuple(sorted(int(i) for i in rng.choice(10, size=k, replace=False)))
+    qp, _ = build_subproblem(inst, perm, flights)
+    lam_star = qp_penalty_threshold(qp, k)
+    vectors = all_binary_vectors(k * k)
+    violation = constraint_violation(vectors, k)
+    above = penalized_energies(vectors, to_qubo(qp, 1.01 * lam_star))
+    below = penalized_energies(vectors, to_qubo(qp, 0.99 * lam_star))
+    assert violation[int(np.argmin(above))] == 0
+    assert violation[int(np.argmin(below))] > 0
 
 
 def test_decode_rejects_non_permutations() -> None:

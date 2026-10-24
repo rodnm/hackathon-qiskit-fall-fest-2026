@@ -1,6 +1,6 @@
 """Qiskit-based solvers. Owner: Diego.
 
-QAOA is built by hand (camino B): QAOAAnsatz + Aer EstimatorV2 + scipy COBYLA, then a single
+QAOA is built by hand (camino B): qaoa_ansatz + Aer EstimatorV2 + scipy COBYLA, then a single
 SamplerV2 run. Measured 0.02-0.12 s per energy evaluation for 9-16 qubits. Never use the
 reference StatevectorSampler/StatevectorEstimator (87 s for N=3).
 
@@ -16,7 +16,7 @@ import tracemalloc
 from functools import lru_cache
 
 import numpy as np
-from qiskit.circuit.library import QAOAAnsatz
+from qiskit.circuit.library import qaoa_ansatz
 from qiskit.transpiler import generate_preset_pass_manager
 from qiskit_aer import AerSimulator
 from qiskit_aer.primitives import EstimatorV2, SamplerV2
@@ -52,7 +52,7 @@ def run_qaoa(
     shots: int = 4096,
     initial_point: np.ndarray | None = None,
     normalize: bool = True,
-    init: str = "grid",
+    init: str = "fixed",
 ) -> tuple[dict[str, int], dict]:
     """Optimize QAOA angles on the QUBO's Ising operator and sample the final circuit.
 
@@ -67,7 +67,7 @@ def run_qaoa(
     scale = float(np.max(np.abs(op.coeffs.real))) if normalize else 1.0
     cost_op = (op / scale).simplify()
 
-    ansatz = QAOAAnsatz(cost_operator=cost_op, reps=reps)
+    ansatz = qaoa_ansatz(cost_op, reps=reps)
     pm = _pass_manager()
     isa = pm.run(ansatz)
     isa_op = cost_op.apply_layout(isa.layout)
@@ -83,9 +83,9 @@ def run_qaoa(
 
     grid_evals = 0
     if initial_point is None and init == "grid":
-        # QAOAAnsatz parameter order is [β_0..β_{p-1}, γ_0..γ_{p-1}]
+        # qaoa_ansatz parameter order is [β_0..β_{p-1}, γ_0..γ_{p-1}]
         betas = np.linspace(0, np.pi / 2, 9)[1:]
-        gammas = np.linspace(0, np.pi, 9)[1:]
+        gammas = np.geomspace(0.05, np.pi, 8)  # dense at small γ, where the good minima sit
         points = np.array([[b] * reps + [g] * reps for b in betas for g in gammas])
         evs = np.asarray(estimator.run([(isa, isa_op, points)]).result()[0].data.evs)
         initial_point = points[int(np.argmin(evs))]
@@ -129,7 +129,7 @@ def solve_qaoa(
     penalty: float | None = None,
     initial_point: np.ndarray | None = None,
     normalize: bool = True,
-    init: str = "grid",
+    init: str = "fixed",
 ) -> Result:
     """QAOA on the penalized QUBO of the full instance (n <= 4 in practice: n² qubits).
 
@@ -242,7 +242,7 @@ def solve_hybrid_lns(
     shots: int = 1024,
     penalty_factor: float = 2.0,
     normalize: bool = True,
-    init: str = "grid",
+    init: str = "fixed",
 ) -> Result:
     """Large-neighborhood search: re-optimize k flights at a time, the rest fixed.
 
@@ -359,6 +359,7 @@ def solve_hybrid_lns(
             "shots": shots,
             "penalty_factor": penalty_factor,
             "normalize": normalize,
+            "init": init,
         },
         extras=extras,
     )
