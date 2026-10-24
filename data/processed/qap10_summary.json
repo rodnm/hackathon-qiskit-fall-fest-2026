@@ -1,0 +1,600 @@
+{
+ "source": "MIPLIB qap10 (https://miplib.zib.de/instance_details_qap10.html); F and D recovered from data/qap10.mps.gz",
+ "units": "assumed, not measured",
+ "cost": "C(perm) = sum over i<k of F[i][k] * D[perm[i]][perm[k]]  (each flight pair counted once)",
+ "gap": "gap_pct = 100 * (C - 340) / 340, only for valid assignments (challenge definition, full instance)",
+ "saving_vs_random": "1 - C / E[C_random]; a saving, not a gap",
+ "flights": [
+  "V1",
+  "V2",
+  "V3",
+  "V4",
+  "V5",
+  "V6",
+  "V7",
+  "V8",
+  "V9",
+  "V10"
+ ],
+ "gates": [
+  "P1",
+  "P2",
+  "P3",
+  "P4",
+  "P5",
+  "P6",
+  "P7",
+  "P8",
+  "P9",
+  "P10"
+ ],
+ "gate_layout": {
+  "columns": 4,
+  "coords_col_row": [
+   [
+    0,
+    0
+   ],
+   [
+    1,
+    0
+   ],
+   [
+    2,
+    0
+   ],
+   [
+    3,
+    0
+   ],
+   [
+    0,
+    1
+   ],
+   [
+    1,
+    1
+   ],
+   [
+    2,
+    1
+   ],
+   [
+    3,
+    1
+   ],
+   [
+    0,
+    2
+   ],
+   [
+    1,
+    2
+   ]
+  ]
+ },
+ "F_upper": [
+  [
+   0,
+   10,
+   4,
+   8,
+   2,
+   0,
+   0,
+   12,
+   4,
+   2
+  ],
+  [
+   0,
+   0,
+   6,
+   0,
+   4,
+   4,
+   4,
+   0,
+   8,
+   10
+  ],
+  [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   10,
+   10,
+   4
+  ],
+  [
+   0,
+   0,
+   0,
+   0,
+   10,
+   4,
+   4,
+   20,
+   0,
+   0
+  ],
+  [
+   0,
+   0,
+   0,
+   0,
+   0,
+   20,
+   0,
+   0,
+   0,
+   10
+  ],
+  [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   10,
+   2,
+   2,
+   10
+  ],
+  [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   20,
+   10,
+   4
+  ],
+  [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ]
+ ],
+ "D": [
+  [
+   0,
+   1,
+   2,
+   3,
+   1,
+   2,
+   3,
+   4,
+   2,
+   3
+  ],
+  [
+   1,
+   0,
+   1,
+   2,
+   2,
+   1,
+   2,
+   3,
+   3,
+   2
+  ],
+  [
+   2,
+   1,
+   0,
+   1,
+   3,
+   2,
+   1,
+   2,
+   4,
+   3
+  ],
+  [
+   3,
+   2,
+   1,
+   0,
+   4,
+   3,
+   2,
+   1,
+   5,
+   4
+  ],
+  [
+   1,
+   2,
+   3,
+   4,
+   0,
+   1,
+   2,
+   3,
+   1,
+   2
+  ],
+  [
+   2,
+   1,
+   2,
+   3,
+   1,
+   0,
+   1,
+   2,
+   2,
+   1
+  ],
+  [
+   3,
+   2,
+   1,
+   2,
+   2,
+   1,
+   0,
+   1,
+   3,
+   2
+  ],
+  [
+   4,
+   3,
+   2,
+   1,
+   3,
+   2,
+   1,
+   0,
+   4,
+   3
+  ],
+  [
+   2,
+   3,
+   4,
+   5,
+   1,
+   2,
+   3,
+   4,
+   0,
+   1
+  ],
+  [
+   3,
+   2,
+   3,
+   4,
+   2,
+   1,
+   2,
+   3,
+   1,
+   0
+  ]
+ ],
+ "subinstances": [
+  {
+   "n": 2,
+   "optimum": 10,
+   "optimal_perm": [
+    0,
+    1
+   ],
+   "identity_cost": 10,
+   "random_mean_cost": 10.0,
+   "saving_vs_random": 0.0,
+   "qubits_one_hot": 4,
+   "feasible_fraction_one_hot": 0.125
+  },
+  {
+   "n": 3,
+   "optimum": 24,
+   "optimal_perm": [
+    0,
+    1,
+    2
+   ],
+   "identity_cost": 24,
+   "random_mean_cost": 26.6667,
+   "saving_vs_random": 0.1,
+   "qubits_one_hot": 9,
+   "feasible_fraction_one_hot": 0.01171875
+  },
+  {
+   "n": 4,
+   "optimum": 32,
+   "optimal_perm": [
+    1,
+    2,
+    3,
+    0
+   ],
+   "identity_cost": 48,
+   "random_mean_cost": 46.6667,
+   "saving_vs_random": 0.3143,
+   "qubits_one_hot": 16,
+   "feasible_fraction_one_hot": 0.0003662109375
+  },
+  {
+   "n": 5,
+   "optimum": 58,
+   "optimal_perm": [
+    1,
+    0,
+    4,
+    2,
+    3
+   ],
+   "identity_cost": 98,
+   "random_mean_cost": 88.0,
+   "saving_vs_random": 0.3409,
+   "qubits_one_hot": 25,
+   "feasible_fraction_one_hot": 3.5762786865234375e-06
+  },
+  {
+   "n": 6,
+   "optimum": 94,
+   "optimal_perm": [
+    1,
+    2,
+    3,
+    0,
+    4,
+    5
+   ],
+   "identity_cost": 134,
+   "random_mean_cost": 139.2,
+   "saving_vs_random": 0.3247,
+   "qubits_one_hot": 36,
+   "feasible_fraction_one_hot": 1.0477378964424133e-08
+  },
+  {
+   "n": 7,
+   "optimum": 112,
+   "optimal_perm": [
+    6,
+    2,
+    3,
+    5,
+    1,
+    0,
+    4
+   ],
+   "identity_cost": 160,
+   "random_mean_cost": 171.4286,
+   "saving_vs_random": 0.3467,
+   "qubits_one_hot": 49,
+   "feasible_fraction_one_hot": 8.952838470577262e-12
+  },
+  {
+   "n": 8,
+   "optimum": 214,
+   "optimal_perm": [
+    1,
+    0,
+    4,
+    2,
+    3,
+    7,
+    6,
+    5
+   ],
+   "identity_cost": 272,
+   "random_mean_cost": 308.0,
+   "saving_vs_random": 0.3052,
+   "qubits_one_hot": 64,
+   "feasible_fraction_one_hot": 2.185751579730777e-15
+  },
+  {
+   "n": 9,
+   "optimum": 264,
+   "optimal_perm": [
+    2,
+    6,
+    3,
+    0,
+    8,
+    4,
+    5,
+    1,
+    7
+   ],
+   "identity_cost": 378,
+   "random_mean_cost": 417.7778,
+   "saving_vs_random": 0.3681,
+   "qubits_one_hot": 81,
+   "feasible_fraction_one_hot": 1.5008365034162134e-19
+  },
+  {
+   "n": 10,
+   "optimum": 340,
+   "optimal_perm": [
+    2,
+    6,
+    3,
+    0,
+    8,
+    4,
+    5,
+    1,
+    7,
+    9
+   ],
+   "identity_cost": 454,
+   "random_mean_cost": 511.7333,
+   "saving_vs_random": 0.3356,
+   "qubits_one_hot": 100,
+   "feasible_fraction_one_hot": 2.8626184528660076e-24
+  }
+ ],
+ "reference_solutions_n10": [
+  {
+   "solution": "óptimo",
+   "cost": 340.0,
+   "gap_pct": 0.0
+  },
+  {
+   "solution": "segundo mejor",
+   "cost": 346.0,
+   "gap_pct": 1.76
+  },
+  {
+   "solution": "identidad (Vi → Pi)",
+   "cost": 454.0,
+   "gap_pct": 33.53
+  },
+  {
+   "solution": "media de una asignación al azar",
+   "cost": 511.7,
+   "gap_pct": 50.5
+  },
+  {
+   "solution": "mediana de una asignación al azar",
+   "cost": 512.0,
+   "gap_pct": 50.59
+  },
+  {
+   "solution": "peor asignación",
+   "cost": 666.0,
+   "gap_pct": 95.88
+  }
+ ],
+ "flow_share_by_distance_n10": {
+  "óptima": {
+   "1": 0.5965,
+   "2": 0.3421,
+   "3": 0.0351,
+   "≥4": 0.0263
+  },
+  "identidad": {
+   "1": 0.4474,
+   "2": 0.2544,
+   "3": 0.1579,
+   "≥4": 0.1404
+  },
+  "aleatoria (esperada)": {
+   "1": 0.2889,
+   "2": 0.3333,
+   "3": 0.2444,
+   "≥4": 0.1333
+  }
+ },
+ "local_search_n10": {
+  "arranques": 2000.0,
+  "óptimos locales distintos": 274.0,
+  "% que termina en el óptimo global (gap 0 %)": 3.2,
+  "% con gap ≤ 5 %": 9.9,
+  "costo medio del óptimo local": 372.9,
+  "gap medio (%)": 9.7,
+  "peor óptimo local": 428.0,
+  "peor gap (%)": 25.9,
+  "pasos medios hasta converger": 4.6
+ },
+ "qiskit_representation": [
+  {
+   "N": 3,
+   "binary_vars": 9,
+   "constraints": 6,
+   "qubits": 9,
+   "pauli_terms": 45,
+   "qiskit_default_penalty": 161.0,
+   "max_objective_coef": 20,
+   "assignments_checked": 6,
+   "cost_matches": true,
+   "build_seconds": 0.02
+  },
+  {
+   "N": 4,
+   "binary_vars": 16,
+   "constraints": 8,
+   "qubits": 16,
+   "pauli_terms": 112,
+   "qiskit_default_penalty": 561.0,
+   "max_objective_coef": 30,
+   "assignments_checked": 24,
+   "cost_matches": true,
+   "build_seconds": 0.03
+  },
+  {
+   "N": 5,
+   "binary_vars": 25,
+   "constraints": 10,
+   "qubits": 25,
+   "pauli_terms": 265,
+   "qiskit_default_penalty": 1761.0,
+   "max_objective_coef": 40,
+   "assignments_checked": 120,
+   "cost_matches": true,
+   "build_seconds": 0.06
+  },
+  {
+   "N": 6,
+   "binary_vars": 36,
+   "constraints": 12,
+   "qubits": 36,
+   "pauli_terms": 516,
+   "qiskit_default_penalty": 4177.0,
+   "max_objective_coef": 80,
+   "assignments_checked": 720,
+   "cost_matches": true,
+   "build_seconds": 0.11
+  },
+  {
+   "N": 10,
+   "binary_vars": 100,
+   "constraints": 20,
+   "qubits": 100,
+   "pauli_terms": 3610,
+   "qiskit_default_penalty": 46057.0,
+   "max_objective_coef": 100,
+   "assignments_checked": 202,
+   "cost_matches": true,
+   "build_seconds": 1.29
+  }
+ ]
+}

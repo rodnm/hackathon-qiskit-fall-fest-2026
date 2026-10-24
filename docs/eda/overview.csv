@@ -1,0 +1,16 @@
+,valor
+vuelos,10
+puertas,10
+pares de vuelos,45
+pares con flujo > 0,29
+densidad,0.644
+flujo total,228
+flujo mínimo > 0,2
+flujo máximo,20
+mediana de flujo (pares > 0),8.0
+mcd de los flujos,2
+distancias distintas (puertas),"[1, 2, 3, 4, 5]"
+distancia media (pares de puertas),2.244
+distancia máxima,5
+D simétrica,True
+D = Manhattan en cuadrícula de 4 columnas,True
