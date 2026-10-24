@@ -51,6 +51,21 @@ def test_qaoa_run_without_valid_samples_has_no_cost_or_gap(lambda_rows):
     assert empty["gap_pct"].isna().all() and empty["gap_vs_control_pct"].isna().all()
 
 
+def test_normalized_qaoa_rows_are_ingested_as_their_own_configuration():
+    rows = benchmark.ingest_qaoa_rows(benchmark.RESULTS / "qaoa_small.csv")
+    comparison = benchmark.compare(rows).set_index(["n", "config"])
+    row = comparison.loc[(4, "qaoa lambda=2*lambda* reps=1 normalized")]
+    assert row["reached_optimum"] == row["runs"] == 5
+    assert row["feasible_vs_floor"] > 10
+    assert row["p_value_vs_floor"] < 1e-100
+
+
+def test_unknown_qaoa_results_format_is_not_silently_skipped(tmp_path):
+    pd.DataFrame({"foo": [1]}).to_csv(tmp_path / "qaoa_unknown.csv", index=False)
+    with pytest.raises(ValueError, match="unknown QAOA results format"):
+        benchmark.ingest_results(tmp_path)
+
+
 def test_ingested_duplicates_are_counted_once():
     merged = benchmark.ingest_results()
     keys = merged[["n", "method", "config", "seed"]]

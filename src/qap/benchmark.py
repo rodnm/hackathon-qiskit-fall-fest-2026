@@ -26,7 +26,7 @@ from pathlib import Path
 import pandas as pd
 
 from . import stats
-from .classical import solve_bruteforce
+from .classical import solve_bruteforce, solve_local_search, solve_sa
 from .data import ROOT, load_instance
 from .types import Instance, Result
 
@@ -53,6 +53,8 @@ class ClassicalMethod:
 
 CLASSICAL: dict[str, ClassicalMethod] = {
     "bruteforce": ClassicalMethod(solve_bruteforce, deterministic=True),
+    "local_search": ClassicalMethod(solve_local_search, params={"restarts": 100}),
+    "sa": ClassicalMethod(solve_sa, params={"iters": 10_000, "restarts": 10}),
 }
 
 
@@ -177,6 +179,30 @@ def ingest_qaoa_m5(path: Path) -> pd.DataFrame:
     return _frame(rows)
 
 
+def ingest_qaoa_rows(path: Path) -> pd.DataFrame:
+    """QAOA runs already in Diego's benchmark-row format (e.g. results/qaoa_small.csv from
+    qap.hybrid_study): one row per run with cost, feasibility, params_json and optimal_prob."""
+    rows = []
+    for r in pd.read_csv(path).to_dict("records"):
+        n = int(r["n"])
+        p = _params(r["params_json"])
+        shots = float(p.get("shots", math.nan))
+        factor = float(p["penalty"]) / _lambda_star(n) if "penalty" in p else math.nan
+        normalized = " normalized" if p.get("normalize") else ""
+        optimal_prob = r.get("optimal_prob", math.nan)
+        rows.append({
+            "instance": r["instance"], "n": n, "method": "qaoa",
+            "config": f"qaoa lambda={factor:g}*lambda* reps={p.get('reps', 1)}{normalized}",
+            "seed": int(r["seed"]), **_evaluate(n, r["cost"], bool(r["feasible"])),
+            "seconds": r["seconds"], "peak_mem_mb": r.get("peak_mem_mb", math.nan), "shots": shots,
+            "feasible_samples": round(r["feasible_fraction"] * shots),
+            "optimal_samples": math.nan if pd.isna(optimal_prob) else round(optimal_prob * shots),
+            "feasible_fraction": r["feasible_fraction"], "penalized_energy": r["penalized_energy"],
+            "params_json": r["params_json"], "source": path.name,
+        })
+    return _frame(rows)
+
+
 def ingest_hybrid(path: Path) -> pd.DataFrame:
     """Hybrid LNS runs from qap.hybrid_study (full instance; subproblem samples are not comparable
     with the random floor of the full QUBO, so shots are left empty)."""
@@ -197,20 +223,31 @@ def ingest_hybrid(path: Path) -> pd.DataFrame:
 INGESTERS: dict[str, Callable[[Path], pd.DataFrame]] = {
     "lambda_qaoa.csv": ingest_lambda_qaoa,
     "qaoa_m5.csv": ingest_qaoa_m5,
+    "qaoa_small.csv": ingest_qaoa_rows,
     "hybrid_lns.csv": ingest_hybrid,
 }
+QAOA_ROW_COLUMNS = {"instance", "n", "method", "seed", "cost", "feasible", "feasible_fraction",
+                    "penalized_energy", "seconds", "params_json"}
 
 
 def ingest_results(results_dir: Path = RESULTS) -> pd.DataFrame:
-    """All known quantum/hybrid result files, plus any qaoa_*.csv with the lambda_study columns.
+    """All known quantum/hybrid result files, plus any other qaoa_*.csv in a known column format.
 
     The same run can appear in several files (e.g. lambda=2*lambda*, reps=1 in both lambda_qaoa.csv
     and qaoa_m5.csv): rows are de-duplicated on (n, method, config, seed), keeping the first file.
+    An unknown qaoa_*.csv format raises instead of being silently skipped.
     """
     frames = [fn(results_dir / name) for name, fn in INGESTERS.items() if (results_dir / name).exists()]
     for path in sorted(results_dir.glob("qaoa_*.csv")):
-        if path.name not in INGESTERS and LAMBDA_QAOA_COLUMNS <= set(pd.read_csv(path, nrows=0).columns):
+        if path.name in INGESTERS:
+            continue
+        columns = set(pd.read_csv(path, nrows=0).columns)
+        if LAMBDA_QAOA_COLUMNS <= columns:
             frames.append(ingest_lambda_qaoa(path))
+        elif QAOA_ROW_COLUMNS <= columns:
+            frames.append(ingest_qaoa_rows(path))
+        else:
+            raise ValueError(f"{path.name}: unknown QAOA results format, add an ingester in qap.benchmark")
     if not frames:
         return _frame([])
     merged = pd.concat(frames, ignore_index=True)
