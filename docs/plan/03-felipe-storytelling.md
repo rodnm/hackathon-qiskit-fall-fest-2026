@@ -1,8 +1,21 @@
-# PARTE 3 — PRODUCTO Y STORYTELLING ("GateFlow Quantum")
+# PARTE 3 — PRODUCTO Y STORYTELLING ("AeroQ Optimizer")
 
 La propuesta de Felipe es `reto-ntt-data/GateFlow_Quantum_Recomendaciones.md` (frontend con React + Vite + TypeScript, backend
 FastAPI, Docker Compose, equipo **The Explorers**). Esta parte la adopta como arquitectura del producto y solo adapta lo que
 debe cambiar para encajar con el código compartido y las reglas de puntuación.
+
+**Nombre del producto (decidido por el equipo): AeroQ Optimizer.** La propuesta original lo llamaba GateFlow Quantum; ese nombre
+ya no se usa. Nombres técnicos:
+
+| Dónde | Nombre |
+|---|---|
+| Producto (diapositivas, pitch, título de la app) | AeroQ Optimizer |
+| Equipo (formulario de entrega) | The Explorers |
+| `frontend/package.json` → `"name"` | `aeroq-optimizer` |
+| `docker-compose.yml` → `name:` | `aeroq` |
+| FastAPI → `title` | `AeroQ Optimizer API` |
+
+No se renombran el repositorio (`hackathon-qiskit-fall-fest-2026`) ni el paquete Python compartido (`qap`).
 
 **Eres responsable de:** `frontend/`, `backend/`, `docker-compose.yml`, `.env.example`, los recursos narrativos de `docs/` (diapositivas, pitch, video,
 descripción), la sección "Product & results" del README y el envío en sí.
@@ -20,7 +33,7 @@ descripción), la sección "Product & results" del README y el envío en sí.
 | Fórmula del objetivo | **Corregir:** el §2.2 de tu documento suma sobre todos los pares ordenados, lo que cuenta cada par de vuelos dos veces (costo 680 en lugar de la referencia 340). La convención del reto es **cada par una sola vez**: `Σ_{i<k} Σ_{j≠l} F_ik·D_jl·x_ij·x_kl`. Corrige la fórmula en tu documento y en el texto de la interfaz; el backend solo debe usar `qap.types.cost`. |
 | Tamaños | **Conservar tu división:** 10×10 completo con el solver clásico; QAOA sobre una instancia reducida, comparada con el óptimo clásico **de esa misma instancia reducida**. Fijamos los tamaños reducidos en **N=3 y N=4** (N=4 por defecto, 16 qubits); el servidor rechaza QAOA para N > 4. La ejecución híbrida N=10 de Diego se muestra desde resultados en caché, nunca en vivo. |
 | Reglas de honestidad | **Conservar todo el §4.3:** objetivo original recalculado para cada asignación, factibilidad visible, la energía penalizada nunca se presenta como distancia, ninguna afirmación de "ventaja cuántica" sin evidencia. |
-| Estructura del repositorio | **Adaptar:** `frontend/` y `backend/` viven en la raíz del repo junto a `src/qap`; sin carpeta adicional `gateflow-quantum/`. |
+| Estructura del repositorio | **Adaptar:** `frontend/` y `backend/` viven en la raíz del repo junto a `src/qap`; sin la carpeta adicional `gateflow-quantum/` de la propuesta original. |
 | Guía de herramientas de IA (§8) | **Conservar:** una herramienta principal de programación + una segunda para revisión crítica; ejecuta todo tú mismo; sin secretos en los prompts. Lleva una nota breve de qué se hizo con ayuda de IA (reglas de integridad de las bases, §11–12). |
 
 ## S0. Primeros 15 minutos (12:45)
@@ -90,7 +103,7 @@ Prioridad: **debe** = Resultados + Comparar + estados de salud/error; **debería
 - Pon las mismas instrucciones en el README (build, inicio, detención).
 
 ## S5. Narrativa y diapositivas — `docs/story.md`, `docs/slides.pptx`
-- Producto: **GateFlow Quantum**, equipo **The Explorers**. Eslogan: *Menos minutos caminando para los pasajeros en conexión — una comparación
+- Producto: **AeroQ Optimizer**, equipo **The Explorers**. Eslogan: *Menos minutos caminando para los pasajeros en conexión — una comparación
   rigurosa entre clásico y cuántico sobre la asignación de puertas.*
 - Gancho (números reales, unidades supuestas): óptimo 340 vs media aleatoria ≈ 512 → **≈ 34 % menos caminata total**; asignación identidad = 454.
 - Veredicto honesto: el método clásico resuelve 10×10 de forma exacta en cerca de 4 s; QAOA se demuestra en 3×3/4×4 y se compara sobre los mismos datos;
@@ -218,7 +231,7 @@ siempre visible.
   no hemos ejecutado en hardware.
 
 **Borrador de la descripción breve (~120 palabras, edita los números con los resultados finales):**
-> GateFlow Quantum assigns connecting flights to airport gates so that transferring passengers walk less. We model the task as a
+> AeroQ Optimizer assigns connecting flights to airport gates so that transferring passengers walk less. We model the task as a
 > quadratic assignment problem (MIPLIB qap10: 10 flights, 10 gates), recover its flow and distance matrices, and solve the full
 > 10×10 case exactly in about 4 seconds. On reduced 3×3 and 4×4 instances we encode the problem as a QUBO and run QAOA with Qiskit
 > Aer, comparing cost, feasibility and measured time against the exact optimum of the same instance. The web app (React, FastAPI,

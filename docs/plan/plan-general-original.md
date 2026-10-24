@@ -4,7 +4,7 @@
 > `00-shared.md` a `04-calendar-and-decisions.md`. Cambios posteriores a esta versión:
 >
 > - Roles con nombre: Rodrigo = Datos, Diego = Modelos, Felipe = Producto y narrativa.
-> - La app de Felipe sigue su propuesta GateFlow Quantum (React + FastAPI + Docker Compose), no Streamlit.
+> - La app de Felipe sigue su propuesta (React + FastAPI + Docker Compose), no Streamlit. El producto se llama **AeroQ Optimizer**.
 > - El calendario pasó a horas reales (congelamiento de código 14:45, ventana de pitch 15:00–16:40).
 > - El EDA (`notebooks/01_data.ipynb`, `docs/eda.md`) separó el **gap** del reto, 100·(C − 340)/340 solo sobre soluciones
 >   válidas, del **ahorro frente al azar** (34 %) que usa la narrativa.

@@ -54,5 +54,5 @@ memoria; dónde deja de ser conveniente), Felipe añade la vista de escalamiento
 1. **Tamaño del equipo:** las bases dicen 4 integrantes; somos 3. Confirmar con los organizadores.
 2. **Visibilidad del repositorio:** el jurado debe poder abrir el repo. Ahora es **privado**. Opciones: hacerlo público en el momento del envío
    (los datos de MIPLIB son públicos; considera eliminar antes los PDF de `reto-ntt-data/`, son documentos de los organizadores) o invitar a las cuentas del jurado.
-3. **Quién es quién (decidido):** Rodrigo = Datos, Felipe = Producto y storytelling (GateFlow Quantum, equipo The Explorers),
+3. **Quién es quién (decidido):** Rodrigo = Datos, Felipe = Producto y storytelling (producto AeroQ Optimizer, equipo The Explorers),
    Diego = Modelos. Pon los nombres completos en `docs/team.md` y en el envío.
