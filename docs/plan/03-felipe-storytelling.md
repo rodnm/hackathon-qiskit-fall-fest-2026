@@ -57,7 +57,8 @@ identify whether a result is a known optimum or the best solution found. `gap_pc
 
 Request to Diego: `extras["samples"]` = top-20 sampled bitstrings as `{perm | null, count, cost | null, energy}` so the UI can
 plot the QAOA sample distribution (feasible vs infeasible).
-Server safety: cap the sizes, time out the QAOA call, CORS only for the configured origin, never expose stack traces.
+Server safety: cap the sizes, time out the QAOA call, allow one QAOA run at a time (a second concurrent request gets HTTP 429),
+never expose stack traces. No CORS configuration is needed behind the Nginx proxy (S4).
 
 Mock JSON (commit it as `frontend/src/mocks/`): one `ResultOut` for brute force N=4 (cost 32), one for QAOA N=4, one benchmark
 table. The real control values are 24 (N=3), 32 (N=4) and 340 (N=10).
@@ -78,7 +79,9 @@ Priority: **must** = Results + Compare + health/error states; **should** = Probl
 
 ## S4. Docker & resilience (your §7)
 - `docker-compose.yml`: `frontend` (Vite build → Nginx) and `backend` (FastAPI via uvicorn). Health checks, non-root user,
-  API URL via `VITE_API_URL`, `.env.example`, no secrets in the repo.
+  `.env.example`, no secrets in the repo. **Simplification:** Nginx proxies `/api/` to `backend:8000` and the frontend always
+  calls the relative `/api/...`; in development the Vite dev server proxies `/api` to `localhost:8000`. No CORS setup and no
+  `VITE_API_URL` needed (S8 has the snippets).
 - The backend image copies `pyproject.toml`, `uv.lock`, `src/qap`, `backend/`, `data/`, `results/`.
 - **The demo must never depend on a live quantum run:** QAOA is live only for N ≤ 4 (seconds to about a minute on Aer);
   everything else is read from committed results. Keep **backup screenshots and the recorded video** (S6) in case the network
@@ -116,11 +119,117 @@ gate per flight and no gate twice ☐ cost recomputed with the original objectiv
 the reduced instance and its results are recorded ☐ the comparison uses exactly the same reduced data ☐ times are measured, not
 estimated ☐ `docker compose up` works from a clean state ☐ reproducible example data ☐ backup screenshots/results.
 
+## S8. Build recipe (copy, then adapt)
+
+**Walking skeleton first (done by 13:15, before any feature).** One vertical slice that proves the whole chain:
+`GET /api/health` and `GET /api/instance?n=4` in FastAPI → a React page showing "Backend OK" and the F/D tables →
+`docker compose up --build` serving it on `http://localhost:8080`. Commit it as the first PR. Everything else is added on top, so
+integration risk is paid once, early.
+
+Layout:
+```text
+backend/app/main.py      # FastAPI app and the 6 routes
+backend/app/schemas.py   # Pydantic: InstanceOut, OptimizeRequest, ResultOut, ValidateRequest
+backend/app/service.py   # calls qap.*; Result -> ResultOut; cached brute-force reference per n
+backend/Dockerfile
+frontend/Dockerfile  frontend/nginx.conf  frontend/vite.config.ts
+frontend/src/{pages,components,services/api.ts,mocks}
+frontend/public/demo-data/   # offline fallback (S9)
+results/.gitkeep             # the folder must exist for the backend image build
+docker-compose.yml  .env.example
+```
+
+`service.py` rules:
+- `reference(n)` = `solve_bruteforce(load_instance(n))`, cached with `functools.lru_cache`; warm it for N=3, 4 and 10 at startup
+  (N=10 takes about 4 s) so no request pays for it. `gap_pct` and `reference_kind` come from here.
+- Every `ResultOut.cost` is recomputed with `qap.types.cost(perm, inst)`; never copy the cost a solver returns.
+- Blocking solvers run off the event loop (`run_in_threadpool`); QAOA additionally under `asyncio.wait_for(..., 90)` and a lock
+  that returns 429 when a run is already in progress.
+
+Backend Dockerfile (sketch; `--no-install-project` first so dependency layers are cached):
+```dockerfile
+FROM python:3.12-slim
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev --no-install-project
+COPY src ./src
+COPY backend ./backend
+COPY data ./data
+COPY results ./results
+RUN uv sync --frozen --no-dev && useradd -m app
+USER app
+HEALTHCHECK CMD python -c "import urllib.request as u; u.urlopen('http://localhost:8000/api/health')"
+CMD ["uv", "run", "--no-sync", "uvicorn", "app.main:app", "--app-dir", "backend", "--host", "0.0.0.0", "--port", "8000"]
+```
+Frontend: multi-stage (`node` build → `nginx`), with `location /api/ { proxy_pass http://backend:8000; proxy_read_timeout 120s; }`
+(the timeout must exceed the 90 s QAOA cap). Compose: `frontend` published on `8080`, `backend` only on the internal network,
+`depends_on` with `condition: service_healthy`.
+Practical notes: the first build downloads Qiskit/Aer (several minutes), so **start one build before 13:30** to warm the cache;
+Docker Desktop must be running; keep the `.dockerignore` (`.venv`, `node_modules`, `.git`, `docs`, `reto-ntt-data`) or the build
+context will be huge.
+
+Endpoint smoke tests (they double as the "done" criteria; automate them as `backend/tests/test_api.py` with FastAPI `TestClient`):
+
+| Request | Expected |
+|---|---|
+| `GET /api/health` | 200, `status = ok` |
+| `GET /api/instance?n=4` | 200, `n = 4`, F upper-triangular, D symmetric |
+| `POST /api/optimize/classical {n:4, method:"bruteforce"}` | `cost = 32`, `feasible = true`, `reference_kind = proven_optimum`, `gap_pct = 0` |
+| `POST /api/optimize/classical {n:10, method:"bruteforce"}` | `cost = 340` in about 4 s |
+| `POST /api/optimize/qaoa {n:5}` | 422 with a clear message (QAOA limited to N ≤ 4) |
+| `POST /api/validate` with an asymmetric D | `ok = false` and an error naming the matrix |
+
+## S9. Resilience: offline demo mode and backups
+- **Offline demo mode:** a script (or a notebook cell from Rodrigo) exports `results/benchmark.csv` and the N=3/4/10 reference
+  results to `frontend/public/demo-data/*.json`. If `/api/health` fails, the UI switches to those files and shows a visible
+  banner "Offline demo data (pre-computed results)". The pitch can then never fail because of Docker, Aer or the network.
+- **Backups:** screenshots of every screen with real results, the recorded video, and the exported JSON; keep a copy on the
+  laptop used to present and one in a shared drive.
+- **Pre-tested demo inputs:** before 14:30 run the live QAOA demo with 3 fixed seeds (N=4), write down the measured time and
+  outcome of each, and use only those seeds in front of the jury.
+
+## S10. Gate-grid map (the signature visual) — `frontend/src/components/GateGrid.tsx`
+Props: `{coords, assignment, F, D}`. Gate j is drawn at `(j % 4, j // 4)` on a 4-column grid (this is the layout the distance
+matrix D encodes: Manhattan distance; say "assumed layout"). Each cell shows the gate number and the assigned flight. Draw an edge
+for every pair with F > 0, stroke width proportional to F, colour intensity by `F × distance` (the cost contribution); highlight
+the 5 largest contributions and show the exact numbers on hover. Two modes: **single assignment** and **side by side**
+(naive vs optimal, with both totals, 454 → 340 on qap10 N=10). Accessible colours (not red/green only), legend, total cost
+always visible.
+
+## S11. Pitch toolkit
+
+**Live demo, step by step (30–40 s):**
+1. Open the app on N=4 → show F/D and the gate grid. 2. Run the exact solver → cost 32 in milliseconds, "proven optimum".
+3. Run QAOA (pre-tested seed) → show cost, feasibility, feasible fraction and measured time, and the gap against 32.
+4. Open Compare → same instance, same data, both results side by side. 5. Switch to the cached N=10 view → 340, the 34 % hook.
+
+**Likely jury questions (answers must stay inside the verified facts):**
+- *Why quantum if brute force takes 4 s?* It does not win on speed at N=10 and we do not claim it; the exact method does not scale
+  (14! ≈ 8.7×10¹⁰ permutations) and QAOA/hybrid is a testbed we measured honestly on instances we can verify.
+- *What is λ?* The weight of the penalty that makes assignments violating "one gate per flight" expensive; Diego derived its
+  threshold exactly on N=3/4 and we checked feasibility of every result.
+- *Is this a quantum advantage?* No evidence of one; we report cost, feasible fraction and time against the classical optimum of
+  the same instance.
+- *How do you know the model is right?* The control optima 24, 32 and 340 are reproduced by an exact search; every cost is
+  recomputed with the original objective.
+- *Reproducible?* `uv.lock`, fixed seeds, parameters stored with every result, `docker compose up`.
+- *Real hardware?* N=4 needs 16 qubits with dense two-qubit interactions; noise and circuit depth would degrade the result; we
+  have not run hardware.
+
+**Short description draft (~120 words, edit the numbers with the final results):**
+> GateFlow Quantum assigns connecting flights to airport gates so that transferring passengers walk less. We model the task as a
+> quadratic assignment problem (MIPLIB qap10: 10 flights, 10 gates), recover its flow and distance matrices, and solve the full
+> 10×10 case exactly in about 4 seconds. On reduced 3×3 and 4×4 instances we encode the problem as a QUBO and run QAOA with Qiskit
+> Aer, comparing cost, feasibility and measured time against the exact optimum of the same instance. The web app (React, FastAPI,
+> Docker Compose) shows the gate map, the assignments and the side-by-side comparison. The optimal assignment cuts total walking by
+> about 34 % against a random one (assumed units). We report where the quantum approach does and does not help.
+
 ## Schedule (clock time; T = 12:45)
 
 | Time | What |
 |---|---|
-| 12:45–13:15 | S0, backend skeleton (`/api/health`, `/api/instance` on the real `qap` types), Vite skeleton, compose file, story skeleton |
+| 12:45–13:15 | S0 + **walking skeleton (S8)**: `/api/health`, `/api/instance` on the real `qap` types → React page → `docker compose up`; start the first Docker build to warm the cache |
 | 13:15–14:00 | Frontend screens on mock JSON; `/api/validate`; `/api/optimize/classical` as soon as Rodrigo's `solve_bruteforce` lands (≈ 13:30); slides 1–5 |
 | 14:00–14:30 | `/api/optimize/qaoa` with Diego's `solve_qaoa` (≈ 14:10), `/api/benchmark`; clean Docker build test #1 |
 | 14:30–14:45 | **Feature freeze.** Bug fixes, backup screenshots, clean Docker build test #2 |
