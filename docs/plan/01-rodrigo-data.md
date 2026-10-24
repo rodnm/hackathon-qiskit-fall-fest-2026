@@ -30,7 +30,7 @@ reshape `(-1, n)`, cost = `(F_upper_vector * D[chunk[:, iu0], chunk[:, iu1]]).su
 keep the min. Return a `Result` (time, peak memory via `tracemalloc`).
 
 ### D4. Exploration for the story (1:00–1:30) — `notebooks/01_data.ipynb` → `docs/figures/*.png`
-Produce exactly these figures (names are the handoff to Felipe; label as "assumed units"):
+Produce exactly these figures (names are the handoff to Felipe, who uses them in the slides; label as "assumed units"):
 1. `gate_grid.png` — the 10 gates on the 4-column grid with gate ids and distances to a reference gate.
 2. `flows_heatmap.png` — F_sym heatmap (flight × flight).
 3. `top_flows.png` — bar chart of the 10 largest flows (which flight pairs matter most; hubs).
