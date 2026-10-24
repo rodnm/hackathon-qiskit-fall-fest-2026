@@ -1,0 +1,7 @@
+solución,costo,gap (%)
+óptimo,340.0,0.0
+segundo mejor,346.0,1.76
+identidad (Vi → Pi),454.0,33.53
+media de una asignación al azar,511.7,50.5
+mediana de una asignación al azar,512.0,50.59
+peor asignación,666.0,95.88

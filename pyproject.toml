@@ -25,6 +25,7 @@ dev = [
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+markers = ["slow: takes several seconds (exact N=10 enumeration)"]
 
 [tool.ruff]
 line-length = 100
