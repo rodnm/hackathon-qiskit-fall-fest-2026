@@ -1,0 +1,137 @@
+STORYTELLING - aeroq-optmizer (lado humano)
+Uso: diapositiva y web del proyecto (hackathon IBM Qiskit)
+Preparado: 2026-10-24
+
+============================================================
+1. EL CASO DOCUMENTADO (hechos, con fuente)
+============================================================
+
+París, aeropuerto Charles de Gaulle, 2007.
+
+Peter Cannell y Eileen Cook volvían de El Cairo con Air France,
+con 50 minutos previstos para su conexión de regreso a casa.
+Su vuelo llegó tarde y perdieron la conexión.
+
+Según declararon a la prensa, incluso si el avión hubiera llegado
+a tiempo, esos 50 minutos no habrían bastado: el vuelo terminó
+en una posición remota del aeropuerto y el trayecto exigía un
+bus hasta la terminal 2C, cruzar a pie la 2C, tomar otro bus a
+la 2F y hacer una larga cola de seguridad. Un empleado de
+tierra les habría confirmado que ese recorrido no se hacía en
+50 minutos. (Testimonio de los viajeros recogido por la
+crónica; no verificado de forma independiente.)
+
+Air France explicó que cuando un vuelo se demora, su puerta de
+llegada suele reasignarse a otro avión, razón por la cual ese
+avión terminó lejos de la terminal.
+
+Fuente: The Guardian, "Dear Anna: Our flight connection fiasco
+left us stranded", 25-may-2007.
+https://www.theguardian.com/business/2007/may/25/theairlineindustry.lifeandhealth
+
+Dato de contexto de la misma crónica: los aeropuertos y
+aerolíneas manejan "tiempos mínimos de conexión" (MCT); en
+París-CDG variaban entre 1 y 2 horas según el tipo de conexión.
+
+============================================================
+2. QUÉ MUESTRA ESTE CASO Y QUÉ NO (honestidad del relato)
+============================================================
+
+Lo que el caso documenta:
+- El testimonio de dos viajeros concretos: su conexión exigía
+  cruzar gran parte del aeropuerto y, según su relato, el
+  tiempo previsto no alcanzaba.
+- Que la posición asignada a un avión es una parte del
+  problema: define cuánto terreno debe cruzar quien conecta
+  (el tiempo disponible, las demoras y los controles también
+  pesan; la distancia es una pieza, no la única).
+- Que aerolíneas y aeropuertos ya reconocen el problema: por
+  eso existen los tiempos mínimos de conexión.
+
+Lo que NO se puede afirmar (evitar en la slide y la web):
+- Que otra asignación de puertas habría salvado esa conexión:
+  la causa inicial fue la demora del vuelo.
+- Que minimizar distancias garantice llegar a tiempo: reduce
+  la caminata, no elimina las demoras.
+- Nada sobre colas de seguridad o buses: el modelo del
+  proyecto solo considera distancia entre puertas, así que
+  esos tramos quedan fuera de lo que aeroq-optmizer optimiza.
+
+============================================================
+3. CÓMO INSPIRA A AEROQ-OPTMIZER (mapeo al modelo)
+============================================================
+
+Detrás de cada variable hay una persona:
+
+- Fik (pasajeros que conectan entre los vuelos i y k):
+  personas con nombre y destino, como Peter y Eileen, que
+  bajan de un avión y necesitan abordar otro.
+
+- Djl (distancia entre las puertas j y l):
+  los metros de terminal que esas personas tienen que
+  recorrer. (El modelo considera solo distancia entre
+  puertas; buses y colas quedan fuera por ahora.)
+
+- La decisión: qué puerta recibe cada vuelo.
+
+- El objetivo: minimizar la suma de "metros x personas",
+  es decir, la distancia total ponderada que recorre en
+  tránsito toda la gente que conecta.
+
+La propuesta del proyecto: explorar ese problema de asignación
+con computación cuántica (Qiskit), como proyecto de hackathon.
+Es una exploración, no una implementación validada ni una
+ventaja cuántica demostrada.
+
+Frase de anclaje (opcional):
+"Una asignación de puertas no parece humana hasta que la miras
+desde los zapatos de quien conecta."
+
+============================================================
+4. VARIANTES BREVES
+============================================================
+
+A) Una línea (diapositiva):
+"Diez vuelos, diez puertas, y gente caminando entre ellas:
+aeroq-optmizer busca la asignación que recorta los metros que
+recorren juntas."
+
+B) Treinta segundos (pitch hablado):
+"En 2007, una pareja perdió su conexión en París después de
+cruzar dos terminales en bus y a pie. Casos así muestran algo
+simple: dónde se estaciona cada avión define cuánto camina la
+gente que conecta. Ese es el problema que tomamos: diez
+vuelos, diez puertas, y los flujos de pasajeros entre ellos.
+aeroq-optmizer explora, con computación cuántica, qué puerta
+darle a cada vuelo para que la distancia total que caminan sea
+la menor posible."
+
+C) Párrafo (web del proyecto):
+"Piensa en una persona que baja de un avión y camina hacia el
+siguiente: cuánta distancia recorre no es azar, depende de qué
+puerta se asignó a cada vuelo. aeroq-optmizer modela ese
+problema (vuelos, puertas y flujos de pasajeros en tránsito)
+y explora con computación cuántica la asignación que minimiza
+la distancia total ponderada que caminan. Un problema clásico
+de investigación de operaciones (estudiado desde Mangoubi y
+Mathaisel, Transportation Science, 1985), mirado desde las
+personas que lo caminan."
+Referencia: https://pubsonline.informs.org/doi/10.1287/trsc.19.2.173
+
+============================================================
+5. LÍMITES DE USO (checklist antes de publicar)
+============================================================
+
+- Presentar el caso Guardian con nombre, fecha y fuente; las
+  declaraciones de los viajeros como testimonio reportado, no
+  como causalidad probada.
+- No afirmar que el optimizador salva conexiones ni evita
+  conexiones perdidas.
+- No afirmar mejoras de accesibilidad ni beneficios para
+  pasajeros con movilidad reducida (el modelo no los mide).
+- No afirmar ventaja cuántica ni resultados que el proyecto
+  no haya medido.
+- Cualquier cifra ilustrativa (ej. "800 metros entre puertas")
+  debe etiquetarse como ejemplo ilustrativo, no como dato real.
+- Bases y reglas del hackathon no verificadas por nosotros;
+  el enunciado del problema proviene del usuario.
