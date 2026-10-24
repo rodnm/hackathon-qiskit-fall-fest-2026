@@ -1,52 +1,52 @@
-# PART 0 — Shared context
+# PARTE 0 — Contexto compartido
 
-## 0.1 The challenge in one paragraph
-NTT DATA × IBM Quantum Hackathon. Instance MIPLIB `qap10`: assign 10 items to 10 locations minimizing
-C(x) = Σ_{i<k} Σ_{j≠l} F_ik·D_jl·x_ij·x_kl (each pair once), x a permutation matrix. Reference optimum **C* = 340**.
-We must use **Qiskit substantively**, compare against a **classical baseline**, report cost, feasibility and time
-honestly (including when quantum does not help), and make results **reproducible**. Day 1 (today, 10:00–17:00,
-pitch window 15:00–16:40): stage 1 (N=3/4, optionally N=10). Day 2 (finalists): scalability N ≥ 14.
+## 0.1 El reto en un párrafo
+Hackathon NTT DATA × IBM Quantum. Instancia MIPLIB `qap10`: asignar 10 elementos a 10 ubicaciones minimizando
+C(x) = Σ_{i<k} Σ_{j≠l} F_ik·D_jl·x_ij·x_kl (cada par una sola vez), con x una matriz de permutación. Óptimo de referencia **C* = 340**.
+Debemos usar **Qiskit de forma sustantiva**, comparar contra una **línea base clásica**, reportar costo, factibilidad y tiempo
+con honestidad (incluso cuando lo cuántico no ayuda) y hacer los resultados **reproducibles**. Día 1 (hoy, 10:00–17:00,
+ventana de pitch 15:00–16:40): etapa 1 (N=3/4, opcionalmente N=10). Día 2 (finalistas): escalabilidad N ≥ 14.
 
-Scoring (NTT): model/data/feasibility 25 · Qiskit relevance & justification 30 · assignment quality vs classical 20 ·
-rigor (time, limits, scaling) 15 · clarity & operational meaning 10. Event rubric on top: innovation/validation 25,
-Qiskit + pitch clarity 25, technical rigor/reproducibility 15, architecture 15. Quantum Hub track: an environment to
-**represent, run, visualize and compare** classical vs quantum/hybrid solutions.
+Puntuación (NTT): modelo/datos/factibilidad 25 · relevancia y justificación de Qiskit 30 · calidad de la asignación vs clásico 20 ·
+rigor (tiempo, límites, escalamiento) 15 · claridad y significado operativo 10. Rúbrica del evento adicional: innovación/validación 25,
+Qiskit + claridad del pitch 25, rigor técnico/reproducibilidad 15, arquitectura 15. Track Quantum Hub: un entorno para
+**representar, ejecutar, visualizar y comparar** soluciones clásicas vs cuánticas/híbridas.
 
-## 0.2 Our framing (Track A)
-10 connecting **flights** → 10 **gates**. F_ik = passengers transferring between flights i and k.
-D_jl = walking distance between gates j and l. Goal: minimize total passenger walking distance.
-**Units are assumptions, not measurements** (the challenge requires saying this explicitly).
+## 0.2 Nuestro planteamiento (Track A)
+10 **vuelos** de conexión → 10 **puertas**. F_ik = pasajeros que hacen transbordo entre los vuelos i y k.
+D_jl = distancia a pie entre las puertas j y l. Objetivo: minimizar la distancia total caminada por los pasajeros.
+**Las unidades son supuestos, no mediciones** (el reto exige decirlo explícitamente).
 
-## 0.3 Facts already verified (do not re-derive)
-- `data/qap10.mps.gz` has 100 assignment vars `X001..X100` (x_ij = `X{10·(i−1)+j}`) and 4050 linearization vars
-  `Y…A…` whose objective coefficient is F_ik·D_jl. A column's entries span several lines of the file.
-- **F and D recover exactly.** D = Manhattan distance on a **4-column grid with 10 cells** (gates 0–3 / 4–7 / 8–9),
-  symmetric; every (i,k) block of coefficients is rank-1 → integer F (values 2…20, 29 of 45 pairs nonzero,
-  total flow 228).
-- **Brute force over 10! = 3 628 800 permutations takes 4.0 s** and returns **340**; optimal permutation
-  `[2 6 3 0 8 4 5 1 7 9]` (flight i → gate perm[i]). Control optima: N=3 → **24**, N=4 → **32**.
-- Naive baselines for the story: identity assignment = 454; random assignment mean ≈ 512 (min 372, max 654).
-  The optimum (340) is **≈ 34 % less walking than a random assignment**.
-- Qiskit stack works (Qiskit 2.6.1, qiskit-optimization 0.7.0, qiskit-algorithms 0.4.0, Aer 0.18):
-  `QuadraticProgram` → `QuadraticProgramToQubo` → `to_ising` gives N=3 → 9 qubits / 45 Pauli terms,
-  N=4 → 16 qubits / 112 terms. `MinimumEigenOptimizer(QAOA(...))` found 24 on N=3.
-  **Speed trap:** the reference `StatevectorSampler/Estimator` took **87 s** for N=3 and never finished for N=4.
-  **Aer `EstimatorV2` evaluates a 16-qubit QAOA circuit in ~0.07 s → always use Aer primitives.**
-- Consequence (say it in the pitch): the exact classical solver answers N=10 in 4 s, so quantum will not win on speed.
-  Our value is a correct model, a rigorous comparison, honest limits, and a clear product.
+## 0.3 Hechos ya verificados (no volver a derivarlos)
+- `data/qap10.mps.gz` tiene 100 variables de asignación `X001..X100` (x_ij = `X{10·(i−1)+j}`) y 4050 variables de
+  linealización `Y…A…` cuyo coeficiente objetivo es F_ik·D_jl. Las entradas de una columna ocupan varias líneas del archivo.
+- **F y D se recuperan de forma exacta.** D = distancia Manhattan sobre una **cuadrícula de 4 columnas con 10 celdas** (puertas 0–3 / 4–7 / 8–9),
+  simétrica; cada bloque (i,k) de coeficientes es de rango 1 → F entera (valores 2…20, 29 de 45 pares distintos de cero,
+  flujo total 228).
+- **La fuerza bruta sobre 10! = 3 628 800 permutaciones toma 4.0 s** y devuelve **340**; permutación óptima
+  `[2 6 3 0 8 4 5 1 7 9]` (vuelo i → puerta perm[i]). Óptimos de control: N=3 → **24**, N=4 → **32**.
+- Líneas base ingenuas para la narrativa: asignación identidad = 454; asignación aleatoria con media ≈ 512 (mín. 372, máx. 654).
+  El óptimo (340) implica **≈ 34 % menos caminata que una asignación aleatoria**.
+- El stack de Qiskit funciona (Qiskit 2.6.1, qiskit-optimization 0.7.0, qiskit-algorithms 0.4.0, Aer 0.18):
+  `QuadraticProgram` → `QuadraticProgramToQubo` → `to_ising` da N=3 → 9 qubits / 45 términos de Pauli,
+  N=4 → 16 qubits / 112 términos. `MinimumEigenOptimizer(QAOA(...))` encontró 24 con N=3.
+  **Trampa de velocidad:** el `StatevectorSampler/Estimator` de referencia tardó **87 s** con N=3 y nunca terminó con N=4.
+  **El `EstimatorV2` de Aer evalúa un circuito QAOA de 16 qubits en ~0.07 s → usar siempre las primitivas de Aer.**
+- Consecuencia (decirla en el pitch): el solver clásico exacto resuelve N=10 en 4 s, así que lo cuántico no ganará en velocidad.
+  Nuestro valor es un modelo correcto, una comparación rigurosa, límites honestos y un producto claro.
 
-## 0.4 Repo rules (everyone)
-- `main` is protected by convention: **branch → commit → push branch → PR**. Never push to `main`.
-  Branch names: `feat/data-…`, `feat/models-…`, `feat/story-…`. One small PR per slice, reviewed by one teammate
-  (target review time: < 10 min).
-- **One writer per file** (ownership below). Need a change in someone else's file → tell them / open a tiny PR to them.
-- Commit messages: imperative sentence describing *why* (see `git log`). No AI-attribution lines in commits/PRs.
-- Setup: `uv sync`; run things with `uv run …`. New dependency: `uv add <pkg>` and commit `pyproject.toml` + `uv.lock`.
-- Integrity (bases §11–12): cite sources (MIPLIB, Qiskit docs, QAOA paper), note what was AI-assisted, and **every
-  member must be able to explain every part of the solution** at the pitch.
+## 0.4 Reglas del repositorio (todos)
+- `main` está protegida por convención: **rama → commit → push de la rama → PR**. Nunca hagas push a `main`.
+  Nombres de rama: `feat/data-…`, `feat/models-…`, `feat/story-…`. Un PR pequeño por porción de trabajo, revisado por un compañero
+  (tiempo de revisión objetivo: < 10 min).
+- **Un solo autor por archivo** (propiedad más abajo). Si necesitas un cambio en un archivo ajeno → avísale / abre un PR diminuto hacia esa persona.
+- Mensajes de commit: oración en imperativo que describa el *porqué* (ver `git log`). Sin líneas de atribución de IA en commits/PR.
+- Configuración: `uv sync`; ejecuta con `uv run …`. Nueva dependencia: `uv add <pkg>` y haz commit de `pyproject.toml` + `uv.lock`.
+- Integridad (bases §11–12): cita las fuentes (MIPLIB, documentación de Qiskit, artículo de QAOA), anota qué se hizo con ayuda de IA y **cada
+  integrante debe poder explicar cada parte de la solución** en el pitch.
 
-## 0.5 Step 0 — Shared contracts (first ~20 min; Rodrigo writes it, everyone reviews it)
-Everything below lives in `src/qap/` and is **frozen after merge** (changes must be announced to the team).
+## 0.5 Paso 0 — Contratos compartidos (primeros ~20 min; Rodrigo lo escribe, todos lo revisan)
+Todo lo siguiente vive en `src/qap/` y queda **congelado tras el merge** (los cambios deben anunciarse al equipo).
 
 ```python
 # src/qap/types.py
@@ -69,12 +69,12 @@ class Result:
     params: dict                     # everything needed to reproduce (reps, lambda, maxiter, shots, k, ...)
     extras: dict                     # penalized_energy, feasible_fraction, history, repaired, ...
 ```
-- `cost(perm, inst)` = Σ_{i<k} F[i,k]·D[perm[i], perm[k]] — **the single source of truth for scale** (each pair once).
-  A vectorized version `costs(perms_2d, inst)` for many permutations.
-- Solver signature for every method: `solve_xxx(inst: Instance, *, seed: int, **params) -> Result`.
-- Variable order convention for QUBO: `x_{i}_{j}` named `f"x_{i}_{j}"`, flattened index `i*n + j`.
-- Benchmark CSV schema (`results/benchmark.csv`):
+- `cost(perm, inst)` = Σ_{i<k} F[i,k]·D[perm[i], perm[k]] — **la única fuente de verdad para la escala** (cada par una sola vez).
+  Una versión vectorizada `costs(perms_2d, inst)` para muchas permutaciones.
+- Firma del solver para cada método: `solve_xxx(inst: Instance, *, seed: int, **params) -> Result`.
+- Convención de orden de variables para QUBO: `x_{i}_{j}` con nombre `f"x_{i}_{j}"`, índice aplanado `i*n + j`.
+- Esquema del CSV de benchmark (`results/benchmark.csv`):
   `instance,n,method,seed,cost,feasible,gap_pct,seconds,peak_mem_mb,feasible_fraction,penalized_energy,params_json`.
-  `gap_pct = 100·(cost−340)/340` **only when feasible and n=10**; for other n use the brute-force optimum as reference.
-- Stubs raising `NotImplementedError` for every solver + `tests/` with the control values (24 / 32 / 340) marked as the
-  acceptance tests each owner must turn green.
+  `gap_pct = 100·(cost−340)/340` **solo cuando es factible y n=10**; para otros n usa como referencia el óptimo de fuerza bruta.
+- Stubs que lancen `NotImplementedError` para cada solver + `tests/` con los valores de control (24 / 32 / 340) marcados como las
+  pruebas de aceptación que cada responsable debe poner en verde.

@@ -1,33 +1,33 @@
-# PART 3 — Felipe: PRODUCT & STORYTELLING ("GateFlow Quantum")
+# PARTE 3 — PRODUCTO Y STORYTELLING ("GateFlow Quantum")
 
-Felipe's proposal is `reto-ntt-data/GateFlow_Quantum_Recomendaciones.md` (React + Vite + TypeScript frontend, FastAPI
-backend, Docker Compose, team **The Explorers**). This part adopts it as the product architecture and only adapts what
-must change so it fits the shared code and the scoring rules.
+La propuesta de Felipe es `reto-ntt-data/GateFlow_Quantum_Recomendaciones.md` (frontend con React + Vite + TypeScript, backend
+FastAPI, Docker Compose, equipo **The Explorers**). Esta parte la adopta como arquitectura del producto y solo adapta lo que
+debe cambiar para encajar con el código compartido y las reglas de puntuación.
 
-**You own:** `frontend/`, `backend/`, `docker-compose.yml`, `.env.example`, `docs/` story assets (slides, pitch, video,
-description), the README "Product & results" section, and the submission itself.
-**You depend on:** Rodrigo's `load_instance` / `solve_bruteforce` / `solve_sa` and figures (first ready ≈ T+0:45), Diego's
-`solve_qaoa` (≈ T+1:30) and `results/benchmark.csv` (≈ T+1:45). Until then build against the mock JSON in S2 so you never wait.
-**Your job is also to protect the schedule:** you run the pre-presentation checklist (S7) and the rehearsal.
+**Eres responsable de:** `frontend/`, `backend/`, `docker-compose.yml`, `.env.example`, los recursos narrativos de `docs/` (diapositivas, pitch, video,
+descripción), la sección "Product & results" del README y el envío en sí.
+**Dependes de:** `load_instance` / `solve_bruteforce` / `solve_sa` y las figuras de Rodrigo (primera versión lista ≈ T+0:45), `solve_qaoa` de Diego
+(≈ T+1:30) y `results/benchmark.csv` (≈ T+1:45). Hasta entonces construye sobre el JSON simulado de S2 para no esperar nunca.
+**Tu trabajo también es proteger el calendario:** diriges la lista de verificación previa a la presentación (S7) y el ensayo.
 
-## What we keep from your proposal, and what we adapt
+## Qué conservamos de tu propuesta y qué adaptamos
 
-| Topic | Decision |
+| Tema | Decisión |
 |---|---|
-| Stack | **Keep:** React + Vite + TypeScript, Recharts, FastAPI + Pydantic, Docker Compose with 2 services (frontend on Nginx, backend), no DB/Redis/Celery. |
-| Backend code | **Adapt:** the API is a thin layer over the shared `qap` package (`src/qap`). No separate `objective.py`, `classical_solver.py`, `quantum_solver.py`, `sample_data.py`: one implementation of the cost, one source of truth. Backend files: `backend/app/main.py`, `schemas.py`, `service.py`. |
-| Dependencies | **Adapt:** managed by uv, not `requirements.txt`: `uv add fastapi "uvicorn[standard]"`, commit `pyproject.toml` + `uv.lock`. The backend Dockerfile installs with `uv sync --frozen --no-dev`. Streamlit is no longer needed (`uv remove streamlit` in your first PR). |
-| Objective formula | **Fix:** §2.2 of your document sums over all ordered pairs, which counts each flight pair twice (cost 680 instead of the reference 340). The challenge convention is **each pair once**: `Σ_{i<k} Σ_{j≠l} F_ik·D_jl·x_ij·x_kl`. Correct the formula in your document and in the UI text; the backend must only use `qap.types.cost`. |
-| Sizes | **Keep your split:** full 10×10 with the classical solver; QAOA on a reduced instance, compared with the classical optimum **of the same reduced instance**. We fix the reduced sizes to **N=3 and N=4** (N=4 default, 16 qubits); the server rejects QAOA for N > 4. Diego's hybrid N=10 run is shown from cached results, never live. |
-| Honesty rules | **Keep all of §4.3:** original objective recomputed for every assignment, feasibility shown, penalized energy never presented as distance, no "quantum advantage" claim without evidence. |
-| Repo layout | **Adapt:** `frontend/` and `backend/` live at the repo root next to `src/qap`; no extra `gateflow-quantum/` folder. |
-| AI-tool guidance (§8) | **Keep:** one main coding tool + a second one for critical review; run everything yourself; no secrets in prompts. Keep a short note of what was AI-assisted (integrity rules of the bases, §11–12). |
+| Stack | **Conservar:** React + Vite + TypeScript, Recharts, FastAPI + Pydantic, Docker Compose con 2 servicios (frontend en Nginx, backend), sin DB/Redis/Celery. |
+| Código del backend | **Adaptar:** la API es una capa delgada sobre el paquete compartido `qap` (`src/qap`). Sin `objective.py`, `classical_solver.py`, `quantum_solver.py`, `sample_data.py` separados: una sola implementación del costo, una sola fuente de verdad. Archivos del backend: `backend/app/main.py`, `schemas.py`, `service.py`. |
+| Dependencias | **Adaptar:** gestionadas con uv, no con `requirements.txt`: `uv add fastapi "uvicorn[standard]"`, haz commit de `pyproject.toml` + `uv.lock`. El Dockerfile del backend instala con `uv sync --frozen --no-dev`. Streamlit ya no es necesario (`uv remove streamlit` en tu primer PR). |
+| Fórmula del objetivo | **Corregir:** el §2.2 de tu documento suma sobre todos los pares ordenados, lo que cuenta cada par de vuelos dos veces (costo 680 en lugar de la referencia 340). La convención del reto es **cada par una sola vez**: `Σ_{i<k} Σ_{j≠l} F_ik·D_jl·x_ij·x_kl`. Corrige la fórmula en tu documento y en el texto de la interfaz; el backend solo debe usar `qap.types.cost`. |
+| Tamaños | **Conservar tu división:** 10×10 completo con el solver clásico; QAOA sobre una instancia reducida, comparada con el óptimo clásico **de esa misma instancia reducida**. Fijamos los tamaños reducidos en **N=3 y N=4** (N=4 por defecto, 16 qubits); el servidor rechaza QAOA para N > 4. La ejecución híbrida N=10 de Diego se muestra desde resultados en caché, nunca en vivo. |
+| Reglas de honestidad | **Conservar todo el §4.3:** objetivo original recalculado para cada asignación, factibilidad visible, la energía penalizada nunca se presenta como distancia, ninguna afirmación de "ventaja cuántica" sin evidencia. |
+| Estructura del repositorio | **Adaptar:** `frontend/` y `backend/` viven en la raíz del repo junto a `src/qap`; sin carpeta adicional `gateflow-quantum/`. |
+| Guía de herramientas de IA (§8) | **Conservar:** una herramienta principal de programación + una segunda para revisión crítica; ejecuta todo tú mismo; sin secretos en los prompts. Lleva una nota breve de qué se hizo con ayuda de IA (reglas de integridad de las bases, §11–12). |
 
-## S0. First 15 minutes (12:45)
-- Fix the objective formula in `GateFlow_Quantum_Recomendaciones.md` (§2.2) and add "each pair counted once".
-- Add the `docs/story.md` skeleton and agree the API contract below with Rodrigo and Diego (they implement the solvers behind it).
+## S0. Primeros 15 minutos (12:45)
+- Corrige la fórmula del objetivo en `GateFlow_Quantum_Recomendaciones.md` (§2.2) y añade "cada par contado una sola vez".
+- Añade el esqueleto de `docs/story.md` y acuerda el contrato de la API que aparece más abajo con Rodrigo y Diego (ellos implementan los solvers detrás de él).
 
-## S1. Architecture (from your §3, adapted)
+## S1. Arquitectura (de tu §3, adaptada)
 
 ```text
 Frontend (React + Vite + TS, Recharts)  ──HTTP/JSON──►  Backend (FastAPI + Pydantic)
@@ -38,95 +38,95 @@ Frontend (React + Vite + TS, Recharts)  ──HTTP/JSON──►  Backend (FastA
                                  Docker Compose: `frontend` (Nginx) + `backend`
 ```
 
-## S2. API contract (agree it first; build the frontend against mock JSON until the backend is real)
+## S2. Contrato de la API (acuérdalo primero; construye el frontend sobre JSON simulado hasta que el backend sea real)
 
-| Method | Endpoint | Behaviour |
+| Método | Endpoint | Comportamiento |
 |---|---|---|
 | GET | `/api/health` | `{status: "ok", qiskit: "<version>"}` |
-| GET | `/api/instance?n=4` | The qap10 sub-instance: `{name, n, F, D, optimum, layout}`; `layout` = gate coordinates on the 4-column grid (an assumption, used only to draw the map) |
-| POST | `/api/validate` | `{F, D}` → `{ok, errors[]}`: shape, integers ≥ 0, F symmetric (stored upper-triangular), D symmetric with zero diagonal. Clear error messages |
-| POST | `/api/optimize/classical` | `{n, method: "bruteforce" or "sa", seed}` → `ResultOut` (bruteforce only for n ≤ 10) |
-| POST | `/api/optimize/qaoa` | `{n ≤ 4, lam, reps, maxiter, shots, seed}` → `ResultOut` (server timeout 90 s, run off the event loop) |
-| GET | `/api/benchmark` | Rows of `results/benchmark.csv` as JSON (cached hybrid N=10, SA and QAOA runs) |
+| GET | `/api/instance?n=4` | La subinstancia de qap10: `{name, n, F, D, optimum, layout}`; `layout` = coordenadas de las puertas en la cuadrícula de 4 columnas (un supuesto, usado solo para dibujar el mapa) |
+| POST | `/api/validate` | `{F, D}` → `{ok, errors[]}`: forma, enteros ≥ 0, F simétrica (almacenada triangular superior), D simétrica con diagonal cero. Mensajes de error claros |
+| POST | `/api/optimize/classical` | `{n, method: "bruteforce" or "sa", seed}` → `ResultOut` (fuerza bruta solo para n ≤ 10) |
+| POST | `/api/optimize/qaoa` | `{n ≤ 4, lam, reps, maxiter, shots, seed}` → `ResultOut` (timeout del servidor 90 s, ejecutado fuera del event loop) |
+| GET | `/api/benchmark` | Filas de `results/benchmark.csv` como JSON (ejecuciones en caché de híbrido N=10, SA y QAOA) |
 
-`ResultOut` mirrors the shared `Result` plus fields for transparency:
+`ResultOut` refleja el `Result` compartido más campos de transparencia:
 `{method, perm, assignment: [{flight, gate}], cost, feasible, seconds, peak_mem_mb, seed, params,
-extras: {penalized_energy, feasible_fraction, history, samples}, reference_cost, gap_pct, reference_kind}` where
-`reference_kind` is `"proven_optimum"` (brute force of that same instance) or `"best_found"`. This covers your requirement to
-identify whether a result is a known optimum or the best solution found. `gap_pct` is computed **only for feasible results**.
+extras: {penalized_energy, feasible_fraction, history, samples}, reference_cost, gap_pct, reference_kind}` donde
+`reference_kind` es `"proven_optimum"` (fuerza bruta de esa misma instancia) o `"best_found"`. Esto cubre tu requisito de
+identificar si un resultado es un óptimo conocido o la mejor solución encontrada. `gap_pct` se calcula **solo para resultados factibles**.
 
-Request to Diego: `extras["samples"]` = top-20 sampled bitstrings as `{perm | null, count, cost | null, energy}` so the UI can
-plot the QAOA sample distribution (feasible vs infeasible).
-Server safety: cap the sizes, time out the QAOA call, allow one QAOA run at a time (a second concurrent request gets HTTP 429),
-never expose stack traces. No CORS configuration is needed behind the Nginx proxy (S4).
+Petición a Diego: `extras["samples"]` = las 20 cadenas de bits muestreadas más frecuentes como `{perm | null, count, cost | null, energy}` para que la interfaz pueda
+graficar la distribución de muestras de QAOA (factibles vs infactibles).
+Seguridad del servidor: limita los tamaños, aplica timeout a la llamada de QAOA, permite una sola ejecución de QAOA a la vez (una segunda solicitud concurrente recibe HTTP 429),
+nunca expongas stack traces. No hace falta configurar CORS detrás del proxy de Nginx (S4).
 
-Mock JSON (commit it as `frontend/src/mocks/`): one `ResultOut` for brute force N=4 (cost 32), one for QAOA N=4, one benchmark
-table. The real control values are 24 (N=3), 32 (N=4) and 340 (N=10).
+JSON simulado (haz commit en `frontend/src/mocks/`): un `ResultOut` para fuerza bruta N=4 (costo 32), uno para QAOA N=4, una tabla de
+benchmark. Los valores de control reales son 24 (N=3), 32 (N=4) y 340 (N=10).
 
-## S3. Frontend (your §5, same screens) — `frontend/`
-1. **Problem data:** F and D tables/heatmaps, sample data preloaded (qap10), validation errors shown as returned.
-2. **Configuration:** N (3, 4, 10), solver (classical or QAOA), QAOA parameters with safe defaults (`reps=1`, `maxiter≈100`,
-   `shots=4096`, `lam` from Diego's λ study).
-3. **Results:** flight → gate table, **gate-grid map** (SVG, flows as edges with width proportional to passengers), total cost,
-   measured time, feasibility badge, reference kind (proven optimum / best found).
-4. **Compare:** classical vs QAOA **on the same N=3/4 instance** (table + Recharts bars: cost, time, feasible fraction), plus the
-   QAOA sample distribution when `extras.samples` exists. A second block shows the cached N=10 results (brute force, SA, hybrid).
-5. **Transparency:** instance size always visible; execution and validation errors never hidden; caption "units and operational
-   conclusions are assumptions, not measurements".
+## S3. Frontend (tu §5, mismas pantallas) — `frontend/`
+1. **Datos del problema:** tablas/mapas de calor de F y D, datos de ejemplo precargados (qap10), errores de validación mostrados tal como se devuelven.
+2. **Configuración:** N (3, 4, 10), solver (clásico o QAOA), parámetros de QAOA con valores por defecto seguros (`reps=1`, `maxiter≈100`,
+   `shots=4096`, `lam` del estudio de λ de Diego).
+3. **Resultados:** tabla vuelo → puerta, **mapa de la cuadrícula de puertas** (SVG, flujos como aristas con grosor proporcional a los pasajeros), costo total,
+   tiempo medido, insignia de factibilidad, tipo de referencia (óptimo demostrado / mejor encontrado).
+4. **Comparar:** clásico vs QAOA **sobre la misma instancia N=3/4** (tabla + barras de Recharts: costo, tiempo, fracción factible), más la
+   distribución de muestras de QAOA cuando existe `extras.samples`. Un segundo bloque muestra los resultados en caché de N=10 (fuerza bruta, SA, híbrido).
+5. **Transparencia:** el tamaño de la instancia siempre visible; los errores de ejecución y de validación nunca se ocultan; leyenda "las unidades y las conclusiones
+   operativas son supuestos, no mediciones".
 
-Priority: **must** = Results + Compare + health/error states; **should** = Problem data + validation UI + sample distribution;
-**could** = editing matrices by hand / CSV upload. Cut from the bottom if time runs out.
+Prioridad: **debe** = Resultados + Comparar + estados de salud/error; **debería** = Datos del problema + interfaz de validación + distribución de muestras;
+**podría** = edición manual de matrices / carga de CSV. Recorta desde abajo si falta tiempo.
 
-## S4. Docker & resilience (your §7)
-- `docker-compose.yml`: `frontend` (Vite build → Nginx) and `backend` (FastAPI via uvicorn). Health checks, non-root user,
-  `.env.example`, no secrets in the repo. **Simplification:** Nginx proxies `/api/` to `backend:8000` and the frontend always
-  calls the relative `/api/...`; in development the Vite dev server proxies `/api` to `localhost:8000`. No CORS setup and no
-  `VITE_API_URL` needed (S8 has the snippets).
-- The backend image copies `pyproject.toml`, `uv.lock`, `src/qap`, `backend/`, `data/`, `results/`.
-- **The demo must never depend on a live quantum run:** QAOA is live only for N ≤ 4 (seconds to about a minute on Aer);
-  everything else is read from committed results. Keep **backup screenshots and the recorded video** (S6) in case the network
-  or the simulator fails.
-- Clean-build test from a fresh clone: `docker compose up --build` at **14:00** and again at **14:40**.
-- Put the same instructions in the README (build, start, stop).
+## S4. Docker y resiliencia (tu §7)
+- `docker-compose.yml`: `frontend` (build de Vite → Nginx) y `backend` (FastAPI con uvicorn). Health checks, usuario no root,
+  `.env.example`, sin secretos en el repo. **Simplificación:** Nginx hace proxy de `/api/` hacia `backend:8000` y el frontend siempre
+  llama a la ruta relativa `/api/...`; en desarrollo el servidor de desarrollo de Vite hace proxy de `/api` hacia `localhost:8000`. Sin configuración de CORS y sin
+  `VITE_API_URL` (S8 tiene los fragmentos de código).
+- La imagen del backend copia `pyproject.toml`, `uv.lock`, `src/qap`, `backend/`, `data/`, `results/`.
+- **La demo nunca debe depender de una ejecución cuántica en vivo:** QAOA es en vivo solo para N ≤ 4 (de segundos a cerca de un minuto en Aer);
+  todo lo demás se lee de resultados con commit. Guarda **capturas de pantalla de respaldo y el video grabado** (S6) por si fallan la red
+  o el simulador.
+- Prueba de build limpio desde un clon nuevo: `docker compose up --build` a las **14:00** y de nuevo a las **14:40**.
+- Pon las mismas instrucciones en el README (build, inicio, detención).
 
-## S5. Narrative and slides — `docs/story.md`, `docs/slides.pptx`
-- Product: **GateFlow Quantum**, team **The Explorers**. Tagline: *Fewer minutes walking for transferring passengers — a
-  rigorous classical-vs-quantum comparison on gate assignment.*
-- Hook (real numbers, assumed units): optimum 340 vs random mean ≈ 512 → **≈ 34 % less total walking**; identity assignment = 454.
-- Honest verdict: classical solves 10×10 exactly in about 4 s; QAOA is demonstrated on 3×3/4×4 and compared on the same data;
-  quantum is studied for behaviour and scaling, not claimed as faster.
-- 8 slides: (1) title + team; (2) problem with the gate grid; (3) model + constraints + scale check 24/32/340;
-  (4) architecture and pipeline (React → FastAPI → `qap` → Qiskit/Aer); (5) classical baseline + the 34 % hook;
-  (6) QAOA on the reduced instance: feasible fraction, gap, λ; (7) scaling, limits, hybrid N=10 and the Day-2 plan;
-  (8) conclusion, reproducibility (`uv sync`, `docker compose up`), credits.
-  Every number on a slide comes from `results/benchmark.csv` or the verified facts in `00-shared.md`.
+## S5. Narrativa y diapositivas — `docs/story.md`, `docs/slides.pptx`
+- Producto: **GateFlow Quantum**, equipo **The Explorers**. Eslogan: *Menos minutos caminando para los pasajeros en conexión — una comparación
+  rigurosa entre clásico y cuántico sobre la asignación de puertas.*
+- Gancho (números reales, unidades supuestas): óptimo 340 vs media aleatoria ≈ 512 → **≈ 34 % menos caminata total**; asignación identidad = 454.
+- Veredicto honesto: el método clásico resuelve 10×10 de forma exacta en cerca de 4 s; QAOA se demuestra en 3×3/4×4 y se compara sobre los mismos datos;
+  lo cuántico se estudia por su comportamiento y su escalamiento, sin afirmar que sea más rápido.
+- 8 diapositivas: (1) título + equipo; (2) problema con la cuadrícula de puertas; (3) modelo + restricciones + verificación de escala 24/32/340;
+  (4) arquitectura y pipeline (React → FastAPI → `qap` → Qiskit/Aer); (5) línea base clásica + el gancho del 34 %;
+  (6) QAOA sobre la instancia reducida: fracción factible, brecha, λ; (7) escalamiento, límites, híbrido N=10 y el plan del Día 2;
+  (8) conclusión, reproducibilidad (`uv sync`, `docker compose up`), créditos.
+  Cada número en una diapositiva proviene de `results/benchmark.csv` o de los hechos verificados en `00-shared.md`.
 
-## S6. Pitch, video, submission
-- **Pitch 2:30–3:00** (your §11, with times): 0:00–0:25 problem; 0:25–0:50 model (QAP); 0:50–1:15 classical 10×10 solution;
-  1:15–1:50 QAOA on the reduced instance, compared with the classical optimum of the **same** instance (live, 30 s);
-  1:50–2:30 measured cost, feasibility, time; 2:30–3:00 limitations and next step. Fallback: the recorded video.
-- Q&A cheat sheet (agree the answers with Rodrigo and Diego): *Why quantum if brute force takes 4 s? What is λ and how did you
-  choose it? Is this a quantum advantage? Why QAOA? How do you know it is feasible and correct (24/32/340)? How reproducible is
-  it? What changes on real hardware?*
-- **Demo video** (60–90 s, Win+G or OBS): the app flow of the pitch; upload it where the jury can open it without login.
-- **Submission** (bases §8, due before 17:00, target 16:00): ☐ team name ☐ member names ☐ GitHub repo link ☐ demo link or video
-  ☐ short description (~120 words, `docs/description.md`) ☐ PPT. Open **every link in a private window**. The repo is private
-  today → see `04-calendar-and-decisions.md`, decision 2.
+## S6. Pitch, video, envío
+- **Pitch 2:30–3:00** (tu §11, con tiempos): 0:00–0:25 problema; 0:25–0:50 modelo (QAP); 0:50–1:15 solución clásica 10×10;
+  1:15–1:50 QAOA sobre la instancia reducida, comparado con el óptimo clásico de la **misma** instancia (en vivo, 30 s);
+  1:50–2:30 costo medido, factibilidad, tiempo; 2:30–3:00 limitaciones y siguiente paso. Plan de contingencia: el video grabado.
+- Hoja de respuestas para el Q&A (acuerda las respuestas con Rodrigo y Diego): *¿Por qué cuántico si la fuerza bruta toma 4 s? ¿Qué es λ y cómo lo
+  elegiste? ¿Es esto una ventaja cuántica? ¿Por qué QAOA? ¿Cómo sabes que es factible y correcto (24/32/340)? ¿Qué tan reproducible es?
+  ¿Qué cambia en hardware real?*
+- **Video de la demo** (60–90 s, Win+G u OBS): el flujo de la app del pitch; súbelo donde el jurado pueda abrirlo sin iniciar sesión.
+- **Envío** (bases §8, vence antes de las 17:00, objetivo 16:00): ☐ nombre del equipo ☐ nombres de los integrantes ☐ enlace al repositorio de GitHub ☐ enlace a la demo o video
+  ☐ descripción breve (~120 palabras, `docs/description.md`) ☐ PPT. Abre **cada enlace en una ventana privada**. El repo es privado
+  hoy → ver `04-calendar-and-decisions.md`, decisión 2.
 
-## S7. Pre-presentation checklist (your §10, adopted as acceptance criteria)
-☐ Matrices have compatible dimensions ☐ invalid data is rejected with clear messages ☐ every shown solution assigns exactly one
-gate per flight and no gate twice ☐ cost recomputed with the original objective ☐ classical solver works on 10×10 ☐ QAOA runs on
-the reduced instance and its results are recorded ☐ the comparison uses exactly the same reduced data ☐ times are measured, not
-estimated ☐ `docker compose up` works from a clean state ☐ reproducible example data ☐ backup screenshots/results.
+## S7. Lista de verificación previa a la presentación (tu §10, adoptada como criterios de aceptación)
+☐ Las matrices tienen dimensiones compatibles ☐ los datos inválidos se rechazan con mensajes claros ☐ cada solución mostrada asigna exactamente una
+puerta a cada vuelo y ninguna puerta dos veces ☐ costo recalculado con el objetivo original ☐ el solver clásico funciona en 10×10 ☐ QAOA corre sobre
+la instancia reducida y sus resultados quedan registrados ☐ la comparación usa exactamente los mismos datos reducidos ☐ los tiempos se miden, no se
+estiman ☐ `docker compose up` funciona desde un estado limpio ☐ datos de ejemplo reproducibles ☐ capturas/resultados de respaldo.
 
-## S8. Build recipe (copy, then adapt)
+## S8. Receta de construcción (copia y luego adapta)
 
-**Walking skeleton first (done by 13:15, before any feature).** One vertical slice that proves the whole chain:
-`GET /api/health` and `GET /api/instance?n=4` in FastAPI → a React page showing "Backend OK" and the F/D tables →
-`docker compose up --build` serving it on `http://localhost:8080`. Commit it as the first PR. Everything else is added on top, so
-integration risk is paid once, early.
+**Primero el esqueleto mínimo funcional (walking skeleton) (listo a las 13:15, antes de cualquier funcionalidad).** Una porción vertical que prueba toda la cadena:
+`GET /api/health` y `GET /api/instance?n=4` en FastAPI → una página de React que muestra "Backend OK" y las tablas F/D →
+`docker compose up --build` sirviéndola en `http://localhost:8080`. Haz commit como primer PR. Todo lo demás se añade encima, así el
+riesgo de integración se paga una sola vez, al inicio.
 
-Layout:
+Estructura:
 ```text
 backend/app/main.py      # FastAPI app and the 6 routes
 backend/app/schemas.py   # Pydantic: InstanceOut, OptimizeRequest, ResultOut, ValidateRequest
@@ -139,14 +139,14 @@ results/.gitkeep             # the folder must exist for the backend image build
 docker-compose.yml  .env.example
 ```
 
-`service.py` rules:
-- `reference(n)` = `solve_bruteforce(load_instance(n))`, cached with `functools.lru_cache`; warm it for N=3, 4 and 10 at startup
-  (N=10 takes about 4 s) so no request pays for it. `gap_pct` and `reference_kind` come from here.
-- Every `ResultOut.cost` is recomputed with `qap.types.cost(perm, inst)`; never copy the cost a solver returns.
-- Blocking solvers run off the event loop (`run_in_threadpool`); QAOA additionally under `asyncio.wait_for(..., 90)` and a lock
-  that returns 429 when a run is already in progress.
+Reglas de `service.py`:
+- `reference(n)` = `solve_bruteforce(load_instance(n))`, en caché con `functools.lru_cache`; precalíentalo para N=3, 4 y 10 al iniciar
+  (N=10 toma cerca de 4 s) para que ninguna solicitud lo pague. `gap_pct` y `reference_kind` provienen de aquí.
+- Cada `ResultOut.cost` se recalcula con `qap.types.cost(perm, inst)`; nunca copies el costo que devuelve un solver.
+- Los solvers bloqueantes se ejecutan fuera del event loop (`run_in_threadpool`); QAOA además bajo `asyncio.wait_for(..., 90)` y un lock
+  que devuelve 429 cuando ya hay una ejecución en curso.
 
-Backend Dockerfile (sketch; `--no-install-project` first so dependency layers are cached):
+Dockerfile del backend (boceto; primero `--no-install-project` para que se almacenen en caché las capas de dependencias):
 ```dockerfile
 FROM python:3.12-slim
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
@@ -162,62 +162,62 @@ USER app
 HEALTHCHECK CMD python -c "import urllib.request as u; u.urlopen('http://localhost:8000/api/health')"
 CMD ["uv", "run", "--no-sync", "uvicorn", "app.main:app", "--app-dir", "backend", "--host", "0.0.0.0", "--port", "8000"]
 ```
-Frontend: multi-stage (`node` build → `nginx`), with `location /api/ { proxy_pass http://backend:8000; proxy_read_timeout 120s; }`
-(the timeout must exceed the 90 s QAOA cap). Compose: `frontend` published on `8080`, `backend` only on the internal network,
-`depends_on` with `condition: service_healthy`.
-Practical notes: the first build downloads Qiskit/Aer (several minutes), so **start one build before 13:30** to warm the cache;
-Docker Desktop must be running; keep the `.dockerignore` (`.venv`, `node_modules`, `.git`, `docs`, `reto-ntt-data`) or the build
-context will be huge.
+Frontend: multi-stage (build con `node` → `nginx`), con `location /api/ { proxy_pass http://backend:8000; proxy_read_timeout 120s; }`
+(el timeout debe superar el límite de 90 s de QAOA). Compose: `frontend` publicado en `8080`, `backend` solo en la red interna,
+`depends_on` con `condition: service_healthy`.
+Notas prácticas: el primer build descarga Qiskit/Aer (varios minutos), así que **inicia un build antes de las 13:30** para calentar la caché;
+Docker Desktop debe estar en ejecución; conserva el `.dockerignore` (`.venv`, `node_modules`, `.git`, `docs`, `reto-ntt-data`) o el contexto
+del build será enorme.
 
-Endpoint smoke tests (they double as the "done" criteria; automate them as `backend/tests/test_api.py` with FastAPI `TestClient`):
+Pruebas de humo de los endpoints (sirven también como criterios de "terminado"; automatízalas como `backend/tests/test_api.py` con `TestClient` de FastAPI):
 
-| Request | Expected |
+| Solicitud | Esperado |
 |---|---|
 | `GET /api/health` | 200, `status = ok` |
-| `GET /api/instance?n=4` | 200, `n = 4`, F upper-triangular, D symmetric |
+| `GET /api/instance?n=4` | 200, `n = 4`, F triangular superior, D simétrica |
 | `POST /api/optimize/classical {n:4, method:"bruteforce"}` | `cost = 32`, `feasible = true`, `reference_kind = proven_optimum`, `gap_pct = 0` |
-| `POST /api/optimize/classical {n:10, method:"bruteforce"}` | `cost = 340` in about 4 s |
-| `POST /api/optimize/qaoa {n:5}` | 422 with a clear message (QAOA limited to N ≤ 4) |
-| `POST /api/validate` with an asymmetric D | `ok = false` and an error naming the matrix |
+| `POST /api/optimize/classical {n:10, method:"bruteforce"}` | `cost = 340` en cerca de 4 s |
+| `POST /api/optimize/qaoa {n:5}` | 422 con un mensaje claro (QAOA limitado a N ≤ 4) |
+| `POST /api/validate` con una D asimétrica | `ok = false` y un error que nombra la matriz |
 
-## S9. Resilience: offline demo mode and backups
-- **Offline demo mode:** a script (or a notebook cell from Rodrigo) exports `results/benchmark.csv` and the N=3/4/10 reference
-  results to `frontend/public/demo-data/*.json`. If `/api/health` fails, the UI switches to those files and shows a visible
-  banner "Offline demo data (pre-computed results)". The pitch can then never fail because of Docker, Aer or the network.
-- **Backups:** screenshots of every screen with real results, the recorded video, and the exported JSON; keep a copy on the
-  laptop used to present and one in a shared drive.
-- **Pre-tested demo inputs:** before 14:30 run the live QAOA demo with 3 fixed seeds (N=4), write down the measured time and
-  outcome of each, and use only those seeds in front of the jury.
+## S9. Resiliencia: modo demo sin conexión y respaldos
+- **Modo demo sin conexión:** un script (o una celda de notebook de Rodrigo) exporta `results/benchmark.csv` y los resultados de referencia de N=3/4/10
+  a `frontend/public/demo-data/*.json`. Si `/api/health` falla, la interfaz cambia a esos archivos y muestra un banner visible
+  "Offline demo data (pre-computed results)". Así el pitch nunca puede fallar por Docker, Aer o la red.
+- **Respaldos:** capturas de pantalla de cada pantalla con resultados reales, el video grabado y el JSON exportado; guarda una copia en el
+  laptop con el que se presenta y otra en una unidad compartida.
+- **Entradas de demo probadas de antemano:** antes de las 14:30 ejecuta la demo en vivo de QAOA con 3 semillas fijas (N=4), anota el tiempo medido y el
+  resultado de cada una, y usa solo esas semillas frente al jurado.
 
-## S10. Gate-grid map (the signature visual) — `frontend/src/components/GateGrid.tsx`
-Props: `{coords, assignment, F, D}`. Gate j is drawn at `(j % 4, j // 4)` on a 4-column grid (this is the layout the distance
-matrix D encodes: Manhattan distance; say "assumed layout"). Each cell shows the gate number and the assigned flight. Draw an edge
-for every pair with F > 0, stroke width proportional to F, colour intensity by `F × distance` (the cost contribution); highlight
-the 5 largest contributions and show the exact numbers on hover. Two modes: **single assignment** and **side by side**
-(naive vs optimal, with both totals, 454 → 340 on qap10 N=10). Accessible colours (not red/green only), legend, total cost
-always visible.
+## S10. Mapa de la cuadrícula de puertas (el visual distintivo) — `frontend/src/components/GateGrid.tsx`
+Props: `{coords, assignment, F, D}`. La puerta j se dibuja en `(j % 4, j // 4)` sobre una cuadrícula de 4 columnas (este es el diseño que codifica la matriz
+de distancias D: distancia Manhattan; di "diseño supuesto"). Cada celda muestra el número de puerta y el vuelo asignado. Dibuja una arista
+para cada par con F > 0, con grosor de trazo proporcional a F, intensidad de color según `F × distancia` (la contribución al costo); resalta
+las 5 mayores contribuciones y muestra los números exactos al pasar el cursor. Dos modos: **asignación única** y **lado a lado**
+(ingenua vs óptima, con ambos totales, 454 → 340 en qap10 N=10). Colores accesibles (no solo rojo/verde), leyenda, costo total
+siempre visible.
 
-## S11. Pitch toolkit
+## S11. Kit del pitch
 
-**Live demo, step by step (30–40 s):**
-1. Open the app on N=4 → show F/D and the gate grid. 2. Run the exact solver → cost 32 in milliseconds, "proven optimum".
-3. Run QAOA (pre-tested seed) → show cost, feasibility, feasible fraction and measured time, and the gap against 32.
-4. Open Compare → same instance, same data, both results side by side. 5. Switch to the cached N=10 view → 340, the 34 % hook.
+**Demo en vivo, paso a paso (30–40 s):**
+1. Abre la app en N=4 → muestra F/D y la cuadrícula de puertas. 2. Ejecuta el solver exacto → costo 32 en milisegundos, "óptimo demostrado".
+3. Ejecuta QAOA (semilla probada de antemano) → muestra costo, factibilidad, fracción factible y tiempo medido, y la brecha respecto de 32.
+4. Abre Comparar → misma instancia, mismos datos, ambos resultados lado a lado. 5. Cambia a la vista en caché de N=10 → 340, el gancho del 34 %.
 
-**Likely jury questions (answers must stay inside the verified facts):**
-- *Why quantum if brute force takes 4 s?* It does not win on speed at N=10 and we do not claim it; the exact method does not scale
-  (14! ≈ 8.7×10¹⁰ permutations) and QAOA/hybrid is a testbed we measured honestly on instances we can verify.
-- *What is λ?* The weight of the penalty that makes assignments violating "one gate per flight" expensive; Diego derived its
-  threshold exactly on N=3/4 and we checked feasibility of every result.
-- *Is this a quantum advantage?* No evidence of one; we report cost, feasible fraction and time against the classical optimum of
-  the same instance.
-- *How do you know the model is right?* The control optima 24, 32 and 340 are reproduced by an exact search; every cost is
-  recomputed with the original objective.
-- *Reproducible?* `uv.lock`, fixed seeds, parameters stored with every result, `docker compose up`.
-- *Real hardware?* N=4 needs 16 qubits with dense two-qubit interactions; noise and circuit depth would degrade the result; we
-  have not run hardware.
+**Preguntas probables del jurado (las respuestas deben mantenerse dentro de los hechos verificados):**
+- *¿Por qué cuántico si la fuerza bruta toma 4 s?* No gana en velocidad con N=10 y no lo afirmamos; el método exacto no escala
+  (14! ≈ 8.7×10¹⁰ permutaciones) y QAOA/híbrido es un banco de pruebas que medimos con honestidad en instancias que podemos verificar.
+- *¿Qué es λ?* El peso de la penalización que encarece las asignaciones que violan "una puerta por vuelo"; Diego derivó su
+  umbral de forma exacta en N=3/4 y comprobamos la factibilidad de cada resultado.
+- *¿Es esto una ventaja cuántica?* No hay evidencia de una; reportamos costo, fracción factible y tiempo frente al óptimo clásico de
+  la misma instancia.
+- *¿Cómo saben que el modelo es correcto?* Los óptimos de control 24, 32 y 340 se reproducen con una búsqueda exacta; cada costo se
+  recalcula con el objetivo original.
+- *¿Es reproducible?* `uv.lock`, semillas fijas, parámetros almacenados con cada resultado, `docker compose up`.
+- *¿Hardware real?* N=4 necesita 16 qubits con interacciones densas de dos qubits; el ruido y la profundidad del circuito degradarían el resultado;
+  no hemos ejecutado en hardware.
 
-**Short description draft (~120 words, edit the numbers with the final results):**
+**Borrador de la descripción breve (~120 palabras, edita los números con los resultados finales):**
 > GateFlow Quantum assigns connecting flights to airport gates so that transferring passengers walk less. We model the task as a
 > quadratic assignment problem (MIPLIB qap10: 10 flights, 10 gates), recover its flow and distance matrices, and solve the full
 > 10×10 case exactly in about 4 seconds. On reduced 3×3 and 4×4 instances we encode the problem as a QUBO and run QAOA with Qiskit
@@ -225,21 +225,21 @@ always visible.
 > Docker Compose) shows the gate map, the assignments and the side-by-side comparison. The optimal assignment cuts total walking by
 > about 34 % against a random one (assumed units). We report where the quantum approach does and does not help.
 
-## Schedule (clock time; T = 12:45)
+## Calendario (hora del reloj; T = 12:45)
 
-| Time | What |
+| Hora | Qué |
 |---|---|
-| 12:45–13:15 | S0 + **walking skeleton (S8)**: `/api/health`, `/api/instance` on the real `qap` types → React page → `docker compose up`; start the first Docker build to warm the cache |
-| 13:15–14:00 | Frontend screens on mock JSON; `/api/validate`; `/api/optimize/classical` as soon as Rodrigo's `solve_bruteforce` lands (≈ 13:30); slides 1–5 |
-| 14:00–14:30 | `/api/optimize/qaoa` with Diego's `solve_qaoa` (≈ 14:10), `/api/benchmark`; clean Docker build test #1 |
-| 14:30–14:45 | **Feature freeze.** Bug fixes, backup screenshots, clean Docker build test #2 |
-| 14:45–15:15 | Slides 6–8, pitch rehearsal ×3, video |
-| 15:00–16:40 | Pitch window: **all three of us present** |
-| by 16:00 | Submission sent and links verified (hard cutoff 17:00) |
+| 12:45–13:15 | S0 + **esqueleto mínimo funcional (walking skeleton) (S8)**: `/api/health`, `/api/instance` sobre los tipos reales de `qap` → página de React → `docker compose up`; inicia el primer build de Docker para calentar la caché |
+| 13:15–14:00 | Pantallas del frontend sobre JSON simulado; `/api/validate`; `/api/optimize/classical` en cuanto llegue `solve_bruteforce` de Rodrigo (≈ 13:30); diapositivas 1–5 |
+| 14:00–14:30 | `/api/optimize/qaoa` con `solve_qaoa` de Diego (≈ 14:10), `/api/benchmark`; prueba de build limpio de Docker n.º 1 |
+| 14:30–14:45 | **Congelamiento de funcionalidades.** Corrección de errores, capturas de respaldo, prueba de build limpio de Docker n.º 2 |
+| 14:45–15:15 | Diapositivas 6–8, ensayo del pitch ×3, video |
+| 15:00–16:40 | Ventana de pitch: **los tres presentamos** |
+| antes de las 16:00 | Envío enviado y enlaces verificados (límite estricto 17:00) |
 
-**Load warning:** frontend + API + Docker + slides + video is a lot for one person. Rules: cut by the priorities in S3; Rodrigo
-(after his baselines) takes the API tests and the clean-build check; the backend and compose scaffolding can be generated on request.
+**Advertencia de carga:** frontend + API + Docker + diapositivas + video es mucho para una sola persona. Reglas: recorta según las prioridades de S3; Rodrigo
+(tras sus líneas base) se encarga de las pruebas de la API y de la verificación del build limpio; el andamiaje del backend y de compose puede generarse bajo pedido.
 
-**Your definition of done:** the MVP definition of your document — a user selects the matrices, runs the classical solver on
-10×10, runs QAOA on a reduced instance, sees feasible assignments and recomputed costs, compares both with measured times, and the
-whole system starts with Docker Compose following the README — plus the slides, the rehearsal, the video and the submission.
+**Tu criterio de terminado:** la definición de MVP de tu documento — un usuario selecciona las matrices, ejecuta el solver clásico en
+10×10, ejecuta QAOA en una instancia reducida, ve asignaciones factibles y costos recalculados, compara ambos con tiempos medidos, y todo el
+sistema inicia con Docker Compose siguiendo el README — además de las diapositivas, el ensayo, el video y el envío.
